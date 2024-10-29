@@ -29,10 +29,12 @@ knitr::opts_chunk$set(echo = TRUE)
 GRUK data: GRUK.species contains the species data, GRUK.variable contains site data, GRUK2021.condition contains a field-based condition assessment from the 2021 season.
 ```{r, echo = F, warning = F}
 # read data from P:/15211700_gruk_2021_2024/Data
-excel_sheets("P:/15211700_gruk_2021_2024/Data/GRUK_alle_artsdata_2020-24.xlsx")
+#excel_sheets("P:/15211700_gruk_2021_2024/Data/GRUK_alle_artsdata_2020-24.xlsx")
 
 GRUK.species <- read_excel("P:/15211700_gruk_2021_2024/Data/GRUK_alle_artsdata_2020-24.xlsx",sheet="Arter i ruter")
-GRUK.variables <- read_excel("P:/15211700_gruk_2021_2024/Data/GRUK_alle_artsdata_2020-24.xlsx",sheet="Ruter")
+GRUK.ruter <- read_excel("P:/15211700_gruk_2021_2024/Data/GRUK_alle_artsdata_2020-24.xlsx",sheet="Ruter")
+GRUK.sirkler <- read_excel("P:/15211700_gruk_2021_2024/Data/GRUK_alle_artsdata_2020-24.xlsx",sheet="Sirkler")
+GRUK.polygoner <- read_excel("P:/15211700_gruk_2021_2024/Data/GRUK_alle_artsdata_2020-24.xlsx",sheet="Polygoner")
 
 ```
 
@@ -275,6 +277,7 @@ unique(GRUK.species.ind[is.na(GRUK.species.ind$Light &
 
 ### make GRUK.variables into spatial object
 names(GRUK.variables)
+
 GRUK.variables <- st_as_sf(GRUK.variables, coords = c("x","y"),remove=F)
 # add CRS
 GRUK.variables <- st_set_crs(GRUK.variables,4326)
