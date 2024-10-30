@@ -407,12 +407,15 @@ natopen_NiN_ref <- natopen_NiN_ref %>%
   mutate(sp=str_replace(sp,"Roegneria canina", "Elymus caninus")) %>%
   mutate(sp=str_replace(sp,"Rumex graminifolius", "Rumex acetosella")) %>%
   mutate(sp=str_replace(sp,"Salicornia pojarkovae", "Salicornia procumbens")) %>%
+  mutate(sp=str_replace(sp,"Schedonorus elatior", "Schedonorus arundinaceus")) %>%
+  mutate(sp=str_replace(sp,"Selinum carvifolium", "Selinum carvifolia")) %>%
   mutate(sp=str_replace(sp,"Spergula marina", "Spergularia marina")) %>%
-  mutate(sp=str_replace(sp,"Spergularia salina", "Spergularia marina"))
+  mutate(sp=str_replace(sp,"Spergularia salina", "Spergularia marina")) %>%
+  mutate(sp=str_replace(sp,"Thinopyrum junceiforme", "Elytrigia juncea"))
 
-ind.dat[2556,'species'] <- "Saxifraga osloënsis"
-ind.dat[17,'species'] <- "Hierochloë odorata"
-ind.dat[9,'species'] <- "Hippophaë rhamnoides"
+#ind.dat[2556,'species'] <- "Saxifraga osloënsis"
+#ind.dat[17,'species'] <- "Hierochloë odorata"
+#ind.dat[9,'species'] <- "Hippophaë rhamnoides"
 
 
 # merging with indicator values

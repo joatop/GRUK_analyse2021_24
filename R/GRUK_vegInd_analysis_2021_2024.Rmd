@@ -66,12 +66,6 @@ natopen_NiN_ref_spInfo<-readRDS(paste0(here::here(),"/data/cache/natopen_NiN_ref
 # trimming away sub-species & co, and descriptor info
 ind.Grime[,'species.orig'] <- ind.Grime[,'species']
 ind.Grime[,'species'] <- word(ind.Grime[,'species'], 1,2)
-names(ind.Tyler)[1] <- 'species'
-ind.Tyler$species <- as.factor(ind.Tyler$species)
-#summary(ind.Tyler$species)
-ind.Tyler <- ind.Tyler[!is.na(ind.Tyler$species),]
-ind.Tyler[,'species.orig'] <- ind.Tyler[,'species']
-ind.Tyler[,'species'] <- word(ind.Tyler[,'species'], 1,2)
 
 # dealing with 'duplicates'
 ind.Grime[duplicated(ind.Grime[,'species']),"species"]
@@ -88,13 +82,16 @@ ind.Grime <- ind.Grime %>% filter( !(species.orig %in% list("Carex viridula brac
 #ind.Grime[duplicated(ind.Grime[,'species']),"species"]
 
 
-
 names(ind.Tyler)[1] <- 'species'
+ind.Tyler[,'species.orig'] <- ind.Tyler[,'species']
+ind.Tyler <- ind.Tyler %>% mutate(species = str_remove(species, "sect. "))
 ind.Tyler$species <- as.factor(ind.Tyler$species)
 #summary(ind.Tyler$species)
 ind.Tyler <- ind.Tyler[!is.na(ind.Tyler$species),]
-ind.Tyler[,'species.orig'] <- ind.Tyler[,'species']
+
 ind.Tyler[,'species'] <- word(ind.Tyler[,'species'], 1,2)
+
+
 #ind.Tyler2 <- ind.Tyler
 #ind.Tyler <- ind.Tyler2
 #ind.Tyler[duplicated(ind.Tyler[,'species']),"species"]
@@ -138,13 +135,7 @@ ind.Tyler <- ind.Tyler %>% filter( !(species.orig %in% list("Ammophila arenaria 
 #ind.Tyler[duplicated(ind.Tyler[,'species']),"species"]
 ind.Tyler.dup <- ind.Tyler[duplicated(ind.Tyler[,'species']),"species"]
 #ind.Tyler[ind.Tyler$species %in% ind.Tyler.dup,c("Light","Moisture","Soil_reaction_pH","Nitrogen","species.orig","species")]
-# getting rid of sect. for Hieracium
-ind.Tyler <- ind.Tyler %>% mutate(species=gsub("sect. ","",species.orig))
-ind.Tyler[,'species'] <- word(ind.Tyler[,'species'], 1,2)
 
-#ind.Tyler[duplicated(ind.Tyler[,'species']),"species"]
-ind.Tyler.dup <- ind.Tyler[duplicated(ind.Tyler[,'species']),"species"]
-#ind.Tyler[ind.Tyler$species %in% ind.Tyler.dup,c("Light","Moisture","Soil_reaction_pH","Nitrogen","species.orig","species")]
 # only hybrids left -> get rid of these
 ind.Tyler <- ind.Tyler[!duplicated(ind.Tyler[,'species']),]
 #ind.Tyler[duplicated(ind.Tyler[,'species']),"species"]
@@ -164,10 +155,13 @@ head(ind.dat)
 
 
 ### GRUK data handling
-names(GRUK.variables)
+names(GRUK.ruter)
 names(GRUK.species)
+names(GRUK.sirkler)
+names(GRUK.polygoner)
 #names(GRUK2021.condition)
 
+## GRUK species data handling
 names(GRUK.species)<-c("ObjectID","GlobalID","ParentGlobalID","PolygonID","RuteID","Norsknavn","Latinsknavn","art_dekning","RAkat","CreationDate","Creator","EditDate","Editor","Navn","karplantenavn","karplantedekning","veg_html_row","x")
 
 # fix species names
@@ -176,33 +170,27 @@ GRUK.species <- GRUK.species %>%
   mutate(Species=word(Latinsknavn, 1, 2)) # lose subspecies
 unique(as.factor(GRUK.species$Species))
 
-
-
-## merge species data with indicators
-GRUK.species.ind <- merge(x=GRUK.species[,c("Species", "art_dekning", "ParentGlobalID")], 
+# merge species data with indicators
+GRUK.species.ind <- merge(x=GRUK.species[,c("Species", "art_dekning", "ParentGlobalID","PolygonID","RuteID")], 
                           y= ind.dat[,c("species","CC", "SS", "RR","Light", "Nitrogen", "Soil_disturbance")],
                           by.x="Species", by.y="species", all.x=T)
 summary(GRUK.species.ind)
 
-
 # checking which species didn't find a match
 unique(GRUK.species.ind[is.na(GRUK.species.ind$Light & 
                                 is.na(GRUK.species.ind$RR)),'Species'])
-
-
 
 # fix species name issues
 ind.dat <- ind.dat %>% 
   #  mutate(species=str_replace(species,"Aconitum lycoctonum", "Aconitum septentrionale")) %>% 
   #  mutate(species=str_replace(species,"Carex simpliciuscula", "Kobresia simpliciuscula")) %>%
   #  mutate(species=str_replace(species,"Carex myosuroides", "Kobresia myosuroides")) %>%
-  #  mutate(species=str_replace(species,"Clinopodium acinos", "Acinos arvensis")) %>%
   #  mutate(species=str_replace(species,"Artemisia rupestris", "Artemisia norvegica")) %>%
+  mutate(species=str_replace(species,"Cotoneaster simonsii", "Cotoneaster symondsii")) %>%
   mutate(species=str_replace(species,"Rosa vosagica", "Rosa vosagiaca"))
 
-
-
-GRUK.species <- GRUK.species %>% 
+GRUK.species <- GRUK.species %>%
+  mutate(species=str_replace(Species,"Acinos arvensis", "Clinopodium acinos")) %>%
   mutate(Species=str_replace(Species,"Arabis wahlenbergii", "Arabis hirsuta")) %>%
   #  mutate(Species=str_replace(Species,"Arctous alpinus", "Arctous alpina")) %>%
   #  mutate(Species=str_replace(Species,"Betula tortuosa", "Betula pubescens")) %>%
@@ -216,7 +204,7 @@ GRUK.species <- GRUK.species %>%
   #  mutate(Species=str_replace(Species,"Chamaepericlymenum suecicum", "Cornus suecia")) %>%
   #  mutate(Species=str_replace(Species,"Cicerbita alpina", "Lactuca alpina")) %>%
   mutate(Species=str_replace(Species,"Cotoneaster scandinavicus", "Cotoneaster integerrimus")) %>%
-  mutate(Species=str_replace(Species,"Cotoneaster symondsii", "Cotoneaster integrifolius")) %>%
+  # mutate(Species=str_replace(Species,"Cotoneaster symondsii", "Cotoneaster integrifolius")) %>%
   mutate(Species=str_replace(Species,"Cyanus montanus", "Centaurea montana")) %>%
   #  mutate(Species=str_replace(Species,"Empetrum hermaphroditum", "Empetrum nigrum")) %>%
   mutate(Species=str_replace(Species,"Erysimum virgatum", "Erysimum strictum")) %>%
@@ -230,7 +218,8 @@ GRUK.species <- GRUK.species %>%
   #  mutate(Species=str_replace(Species,"Hieracium alpinum", "Hieracium Alpina")) %>%
   #  mutate(Species=str_replace(Species,"Hieracium hieracium", "Hieracium Hieracium")) %>%
   #  mutate(Species=str_replace(Species,"Hieracium hieracioides", "Hieracium umbellatum")) %>%
-  mutate(Species=str_replace(Species,"Hieracium murorum", "Hieracium Vulgata")) %>%
+  mutate(Species=str_replace(Species,"Hieracium murorum", "Hieracium Hieracium")) %>%
+  mutate(Species=str_replace(Species,"Hieracium vulgatum", "Hieracium Vulgata")) %>%
   #  mutate(Species=str_replace(Species,"Hieracium oreadea", "Hieracium Oreadea")) %>%
   #  mutate(Species=str_replace(Species,"Hieracium prenanthoidea", "Hieracium Prenanthoidea")) %>%
   #  mutate(Species=str_replace(Species,"Hieracium vulgata", "Hieracium Vulgata")) %>%
@@ -253,6 +242,7 @@ GRUK.species <- GRUK.species %>%
   #  mutate(Species=str_replace(Species,"Oxycoccus microcarpus", "Vaccinium microcarpum")) %>%
   #  mutate(Species=str_replace(Species,"Oxycoccus palustris", "Vaccinium oxycoccos")) %>%
   #  mutate(Species=str_replace(Species,"Phalaris minor", "Phalaris arundinacea")) %>%
+  mutate(Species=str_replace(Species,"Pilosella peletariana", "Pilosella officinarum")) %>%
   #  mutate(Species=str_replace(Species,"Pinus unicinata", "Pinus mugo")) %>%
   #  mutate(Species=str_replace(Species,"Poa alpigena", "Poa pratensis")) %>%
   mutate(Species=str_replace(Species,"Poa angustifolia", "Poa pratensis")) %>%
@@ -260,14 +250,16 @@ GRUK.species <- GRUK.species %>%
   #  mutate(Species=str_replace(Species,"Pyrola grandiflora", "Pyrola rotundifolia")) %>%
   mutate(Species=str_replace(Species,"Rosa dumalis", "Rosa vosagiaca")) %>%
   #  mutate(Species=str_replace(Species,"Rumex alpestris", "Rumex acetosa")) %>%
+  mutate(Species=str_replace(Species,"Sorbus hybrida", "Hedlundia hybrida")) %>%
+  mutate(Species=str_replace(Species,"Spergularia salina", "Spergularia marina")) %>%
   #  mutate(Species=str_replace(Species,"Syringa emodi", "Syringa vulgaris")) %>%
   #  mutate(Species=str_replace(Species,"Taraxacum crocea", "Taraxacum officinale")) %>%
   #  mutate(Species=str_replace(Species,"Taraxacum croceum", "Taraxacum officinale")) %>%
   #  mutate(Species=str_replace(Species,"Trientalis europaea", "Lysimachia europaea")) %>%
   mutate(Species=str_replace(Species,"Trifolium pallidum", "Trifolium pratense"))
 
-## merge species data with indicators
-GRUK.species.ind <- merge(x=GRUK.species[,c("Species", "art_dekning", "ParentGlobalID")], 
+# merge species data with indicators
+GRUK.species.ind <- merge(x=GRUK.species[,c("Species", "art_dekning", "ParentGlobalID","PolygonID","RuteID")], 
                           y= ind.dat[,c("species","CC", "SS", "RR","Light", "Nitrogen", "Soil_disturbance")],
                           by.x="Species", by.y="species", all.x=T)
 summary(GRUK.species.ind)
@@ -275,63 +267,121 @@ summary(GRUK.species.ind)
 unique(GRUK.species.ind[is.na(GRUK.species.ind$Light & 
                                 is.na(GRUK.species.ind$RR)),'Species'])
 
-### make GRUK.variables into spatial object
-names(GRUK.variables)
+## GRUK ruter data handling
+names(GRUK.ruter)
+# make coordinates numeric
+GRUK.ruter <- GRUK.ruter %>% 
+  mutate( UTM33_E_ne=as.numeric(UTM33_E_ne) ) %>%
+  mutate( UTM33_N_ne=as.numeric(UTM33_N_ne) ) %>%
+  mutate( UTM33_E_sw=as.numeric(UTM33_E_sw) ) %>%
+  mutate( UTM33_N_sw=as.numeric(UTM33_N_sw) )
 
-GRUK.variables <- st_as_sf(GRUK.variables, coords = c("x","y"),remove=F)
-# add CRS
-GRUK.variables <- st_set_crs(GRUK.variables,4326)
-# transform CRS to match ANO
-GRUK.variables <- GRUK.variables %>%
-  st_as_sf() %>%
-  st_transform(crs = st_crs(ANO.geo))
+# calculate central coordinates for each plot
+GRUK.ruter <- GRUK.ruter %>% 
+  mutate(UTM33_N = (UTM33_N_ne + UTM33_N_sw)/2) %>%
+  mutate(UTM33_E = (UTM33_E_ne + UTM33_E_sw)/2)
 
-### merge GRUK.variables and GRUK2021.condition
-#GRUK.variables <- as.data.frame(GRUK.variables)
-GRUK2021.condition <- as.data.frame(GRUK2021.condition)
-
-head(GRUK.variables)
-head(GRUK2021.condition)
-
-## fixing site-ID in the condition-data
-GRUK2021.condition$Flate_ID <- GRUK2021.condition$områdenavn
-unique(as.factor(GRUK2021.condition$Flate_ID))
-GRUK2021.condition$Flate_ID <- gsub("_", " ", GRUK2021.condition$Flate_ID) # replace underscore with space
-unique(as.factor(GRUK2021.condition$Flate_ID))
-GRUK2021.condition$Flate_ID <- sub(" .*", "", GRUK2021.condition$Flate_ID) # remove everything after space
-unique(as.factor(GRUK2021.condition$Flate_ID))
-
-#GRUK2021.condition$Flate_ID <- gsub(" ", "-", GRUK2021.condition$Flate_ID) # replace space with hyphon
-#GRUK2021.condition$Flate_ID <- gsub("[^0-9\\-]", "", GRUK2021.condition$Flate_ID) # remove all non-numerics except '-'
-#GRUK2021.condition$Flate_ID <- gsub("--", "-", GRUK2021.condition$Flate_ID) # remove double hyphons
-#GRUK2021.condition$Flate_ID <- substr(GRUK2021.condition$Flate_ID, 1, nchar(GRUK2021.condition$Flate_ID)-1) # remove the last character ('-' for all)
+# some of the calculations throw NA's because there's only one set of coordinates, coalesce that set into the calculation column 
+GRUK.ruter <- GRUK.ruter %>% 
+  mutate (UTM33_N = coalesce(UTM33_N,UTM33_N_ne) ) %>%
+  mutate (UTM33_E = coalesce(UTM33_E,UTM33_E_ne) )
+GRUK.ruter <- GRUK.ruter %>% 
+  mutate (UTM33_N = coalesce(UTM33_N,UTM33_N_sw) ) %>%
+  mutate (UTM33_E = coalesce(UTM33_E,UTM33_E_sw) )
 
 
-colnames(GRUK.variables)
-colnames(GRUK2021.condition)
+## GRUK sirkler data handling
 
+## GRUK polygoner data handling
+
+## merge information on mapping units and condition variables from GRUK.sirkler into GRUK.ruter
+names(GRUK.ruter)
+names(GRUK.sirkler)
+GRUK.variables <- merge(x=GRUK.ruter[,c(2,4:11,19:23,25,52:53)], 
+                    y=GRUK.sirkler[,c("GlobalID",
+                                      "Kartleggingsenhet 1:5000",
+                                      "Spor etter slitasje og slitasjebetinget erosjon (%)",
+                                      "Dekning % av nakent berg",
+                                      "Total dekning % av vedplanter i feltsjikt",
+                                      "Dekning % av busker i busksjikt",
+                                      "Dekning % av tresjikt",
+                                      "Dekning % av problemarter",
+                                      "Total dekning % av fremmede arter")], 
+                    by.x="GlobalID", by.y="GlobalID", all.x=T)
+summary(GRUK.variables)
+
+## merge information on condition and quality from GRUK.polygoner into GRUK.variables
+# transform GRUK.variables into spatial object
+GRUK.variables <- st_as_sf(GRUK.variables, coords = c("UTM33_E","UTM33_N"),remove=F, crs = 25833)
+
+# transform GRUK.polygoner into spatial object
+GRUK.polygoner <- st_as_sf(GRUK.polygoner, wkt = "WKT" ,remove=F, crs = 25833)
+
+tm_shape(GRUK.polygoner) +
+  tm_graticules() +
+  tm_polygons("PolygonID") +
+  tm_shape(GRUK.variables) +
+  tm_dots("RuteID")
+  
+# run a spatial join to get columns from GRUK.polygoner into GRUK.variables
+GRUK.variables <- st_join(GRUK.variables,GRUK.polygoner[,c(3:4,9,15,18,20,22,24,60)])
+names(GRUK.variables)[1:33]<-c("GlobalID","PolygonID.x","RuteID","RuteID_loknr",
+                               "Dekning%avkarplanterifeltsjikt","Dekning%avmoser","Dekning%avlav","Dekning%avstrø",
+                               "Dekning%avbarjord/grus/stein/berg","Precision","UTM33_E_ne","UTM33_N_ne",
+                               "UTM33_E_sw","UTM33_N_sw","areal(m2)","UTM33_N","UTM33_E","Kartleggingsenhet1:5000",
+                               "Sporetterslitasjeogslitasjebetingeterosjon(%)","Dekning%avnakentberg",
+                               "Totaldekning%avvedplanterifeltsjikt","Dekning%avbuskeribusksjikt","Dekning%avtresjikt",
+                               "Dekning%avproblemarter","Totaldekning%avfremmedearter","LokalitetID","PolygonID.y",
+                               "Kartleggingsdato","Lokalitetskvalitet","Kommune","Tilstand","Naturmangfold","NiNKartleggingsenheter")
+
+# check how good the spatial join worked
+cbind(GRUK.variables$PolygonID.x,GRUK.variables2$PolygonID.y)
+GRUK.variables[7,]
+GRUK.polygoner[GRUK.polygoner$PolygonID=="46-2",]
+# some points could not be matched to polygons -> merge by PolygonID instead, drop geometry of GRUK.variables first
+GRUK.variables <- st_drop_geometry(GRUK.variables)
 GRUK.variables <- merge(x=GRUK.variables, 
-                        y=GRUK2021.condition[,c("tilstandsvurdering","tilstandsgrunn","artsmangfoldvurdering","lokalitetskvalitet","Flate_ID")], 
-                        by.x="Flate_ID", by.y="Flate_ID", all.x=T)
+                        y=GRUK.polygoner[,c(3:4,9,15,18,20,22,24)], 
+                        by.x="PolygonID", by.y="PolygonID", all.x=T)
+summary(GRUK.variables) 
+summary(as.factor(GRUK.variables$Tilstand)) # no unexpected NA's
 
 
-
-## adding information on ecosystem and condition variables to species data
+## adding information on ecosystem and condition variables to species+indicator data
+names(GRUK.species.ind)
+names(GRUK.variables)
 GRUK.species.ind <- merge(x=GRUK.species.ind, 
-                          y=GRUK.variables[,c("GlobalID","year","Flate_ID","Punkt_ID",
-                                              "Total dekning % av karplanter registert","Dekning % av karplanter i feltsjikt","Dekning % av moser",
-                                              "Dekning % av lav","Dekning % av strø","Dekning % av bar jord/grus/stein/berg",
-                                              "Kartleggingsenhet",
-                                              "Spor etter ferdsel med tunge kjøretøy (%)","Spor etter slitasje og slitasjebetinget erosjon (%)","Dekning % av nakent berg","Menneskeskapte objekter i sirkelen?",
-                                              "Total dekning % av vedplanter i feltsjikt","Dekning % av busker i busksjikt","Dekning % av tresjikt","Dekning % av problemarter","Total dekning % av fremmede arter",
-                                              "x","y")], 
+                          y=GRUK.variables[,-c(2:3)], 
                           by.x="ParentGlobalID", by.y="GlobalID", all.x=T)
-# trimming away the points without information on NiN, species or cover
+summary(GRUK.species.ind)
+# fixing variable names and types
+names(GRUK.species.ind)<-c("ParentGlobalID","Species","art_dekning","PolygonID",
+                           "RuteID","CC","SS","RR","Light","Nitrogen",
+                           "Soil_disturbance","RuteID_loknr","Dekning_karplanter_feltsjikt",
+                           "Dekning_moser","Dekning_lav","Dekning_strø",
+                           "Dekning_bar_substrat","Precision",
+                           "UTM33_E_ne","UTM33_N_ne","UTM33_E_sw","UTM33_N_sw",
+                           "areal_m2","UTM33_N","UTM33_E","Kartleggingsenhet_1til5000",
+                           "erosion_prosent",
+                           "Dekning_nakentberg","Totaldekning_vedplanter_feltsjikt",
+                           "Dekning_busker_busksjikt","Dekning_tresjikt",
+                           "Dekning_problemarter","Totaldekning_fremmedearter")
+
+GRUK.species.ind <- GRUK.species.ind %>% 
+  mutate(Species = as.factor(Species)) %>%
+  mutate(areal_m2 = as.numeric(areal_m2)) %>%
+  mutate(Kartleggingsenhet_1til5000 = as.factor(Kartleggingsenhet_1til5000)) %>%
+  mutate(Dekning_nakentberg = as.numeric(Dekning_nakentberg)) %>%
+  mutate(Dekning_problemarter = as.numeric(Dekning_problemarter))
+summary(GRUK.species.ind)
+
+# trimming away the points without information on NiN, species or cover  
 GRUK.species.ind <- GRUK.species.ind[!is.na(GRUK.species.ind$Species),]
 GRUK.species.ind <- GRUK.species.ind[!is.na(GRUK.species.ind$art_dekning),]
+# no NA's for kartleggingsenhet
 
 #rm(GRUK.species)
-#rm(GRUK.variables)
+#rm(GRUK.ruter)
 
 
 summary(GRUK.species.ind)
@@ -378,12 +428,58 @@ unique(NiN.natopen[is.na(NiN.natopen$Light) & is.na(NiN.natopen$Nitrogen) & is.n
 
 # fix species name issues
 natopen_NiN_ref <- natopen_NiN_ref %>% 
+  mutate(sp=str_replace(sp,"Acinos arvensis", "Clinopodium acinos")) %>%
+  mutate(sp=str_replace(sp,"Aconitum septentrionale", "Aconitum lycoctonum")) %>%
+  mutate(sp=str_replace(sp,"Anagallis minima", "Lysimachia minima")) %>%  
+  mutate(sp=str_replace(sp,"Arabis wahlenbergii", "Arabis hirsuta")) %>% 
+  mutate(sp=str_replace(sp,"Aristavena setacea", "Deschampsia setacea")) %>% 
+  mutate(sp=str_replace(sp,"Atriplex lapponica", "Atriplex longipes")) %>% 
+  mutate(sp=str_replace(sp,"Atriplex praecox", "Atriplex longipes")) %>% 
+  mutate(sp=str_replace(sp,"Blysmopsis rufa", "Blysmus rufus")) %>% 
+  mutate(sp=str_replace(sp,"Carex mackenziei", "Carex norvegica")) %>% 
+  mutate(sp=str_replace(sp,"Carex xvacillans", "Carex vacillans")) %>% 
+  mutate(sp=str_replace(sp,"Cicerbita alpina", "Lactuca alpina")) %>% 
   mutate(sp=str_replace(sp,"Cirsium acaulon", "Cirsium acaule")) %>%
-  mutate(sp=str_replace(sp,"Hylotelephium maximum", "Hylotelephium telephium"))
+  mutate(sp=str_replace(sp,"Cotoneaster scandinavicus", "Cotoneaster integerrimus")) %>%
+  mutate(sp=str_replace(sp,"Dactylorhiza viridis", "Coeloglossum viride")) %>%
+  mutate(sp=str_replace(sp,"Elymus alaskanus", "Elymus kronokensis")) %>%
+  mutate(sp=str_replace(sp,"Elymus repens", "Elytrigia repens")) %>%
+  mutate(sp=str_replace(sp,"Epilobium angustifolium", "Chamaenerion angustifolium")) %>%
+  mutate(sp=str_replace(sp,"Erysimum virgatum", "Erysimum strictum")) %>%
+  mutate(sp=str_replace(sp,"Euphrasia frigida", "Euphrasia wettsteinii")) %>%
+  mutate(sp=str_replace(sp,"Hedlundia meinichii", "Sorbus aucuparia")) %>%
+  mutate(sp=str_replace(sp,"Hylotelephium maximum", "Hylotelephium telephium")) %>%
+  mutate(sp=str_replace(sp,"Juncus arcuatus", "Luzula arcuata")) %>%
+  mutate(sp=str_replace(sp,"Kali turgida", "Kali turgidum")) %>%
+  mutate(sp=str_replace(sp,"Kobresia myosuroides", "Carex myosuroides")) %>%
+  mutate(sp=str_replace(sp,"Luzula pallidula", "Luzula pallescens")) %>%
+  mutate(sp=str_replace(sp,"Lychnis alpina", "Viscaria alpina")) %>%
+  mutate(sp=str_replace(sp,"Minuartia rubella", "Sabulina rubella")) %>%
+  mutate(sp=str_replace(sp,"Minuartia stricta", "Sabulina stricta")) %>%
+  mutate(sp=str_replace(sp,"Ononis arvensis", "Ononis spinosa")) %>%
+  mutate(sp=str_replace(sp,"Papaver dahlianum", "Papaver radicatum")) %>%
+  mutate(sp=str_replace(sp,"Papaver lapponicum", "Papaver radicatum")) %>%
+  mutate(sp=str_replace(sp,"Pentanema salicinum", "Inula salicina")) %>%
+  mutate(sp=str_replace(sp,"Poa alpigena", "Poa pratensis")) %>%
+  mutate(sp=str_replace(sp,"Poa humilis", "Poa pratensis")) %>%
+  mutate(sp=str_replace(sp,"Polygonum boreale", "Polygonum aviculare")) %>%
+  mutate(sp=str_replace(sp,"Polygonum excelsius", "Polygonum aviculare")) %>%
+  mutate(sp=str_replace(sp,"Polygonum norvegicum", "Polygonum oxyspermum")) %>%
+  mutate(sp=str_replace(sp,"Potentilla tabernaemontani", "Potentilla verna")) %>%
+  mutate(sp=str_replace(sp,"Puccinellia retroflexa", "Puccinellia capillaris")) %>%
+  mutate(sp=str_replace(sp,"Pyrola norvegica", "Pyrola rotundifolia")) %>%
+  mutate(sp=str_replace(sp,"Roegneria canina", "Elymus caninus")) %>%
+  mutate(sp=str_replace(sp,"Rumex graminifolius", "Rumex acetosella")) %>%
+  mutate(sp=str_replace(sp,"Salicornia pojarkovae", "Salicornia procumbens")) %>%
+  mutate(sp=str_replace(sp,"Schedonorus elatior", "Schedonorus arundinaceus")) %>%
+  mutate(sp=str_replace(sp,"Selinum carvifolium", "Selinum carvifolia")) %>%
+  mutate(sp=str_replace(sp,"Spergula marina", "Spergularia marina")) %>%
+  mutate(sp=str_replace(sp,"Spergularia salina", "Spergularia marina")) %>%
+  mutate(sp=str_replace(sp,"Thinopyrum junceiforme", "Elytrigia juncea"))
 
-ind.dat[2556,'species'] <- "Saxifraga osloënsis"
-ind.dat[17,'species'] <- "Hierochloë odorata"
-ind.dat[9,'species'] <- "Hippophaë rhamnoides"
+#ind.dat[2556,'species'] <- "Saxifraga osloënsis"
+#ind.dat[17,'species'] <- "Hierochloë odorata"
+#ind.dat[9,'species'] <- "Hippophaë rhamnoides"
 
 
 # merging with indicator values
@@ -406,12 +502,10 @@ for (i in 2:71) {
 
 summary(NiN.natopen)
 summary(NiN.natopen.cov)
-
 ```
-leaving us with the monitoring data including plant indicators (ANO.sp.ind, GRUK.species.ind) and the reference data including plant indicators (NiN.natopen.cov)
+leaving us with the monitoring data including plant indicators (GRUK.species.ind) and the reference data including plant indicators (NiN.natopen.cov)
 
 ```{r}
-head(ANO.sp.ind)
 head(GRUK.species.ind)
 head(NiN.natopen.cov)
 ```
@@ -689,378 +783,6 @@ scal <- function() {
 ```
 
 We then can prepare a list of data frames to hold the results and perform the scaling according to the principles described in NINA report 1967 (Töpper and Jakobsson 2021)
-This is done separately for ANO and ASO. First for ANO:
-```{r, include=FALSE}
-
-unique(ANO.geo$hovedtype_rute) # NiN types in data
-unique(substr(natopen.ref.cov.val$grunn,1,3)) # NiN types in reference
-#### creating dataframe to hold the results for natopens ####
-# all ANO points
-nrow(ANO.geo)
-# all natopen ANO points
-nrow(ANO.geo[ANO.geo$hovedtype_rute %in% list("T2","T8","T11","T12","T13","T15","T16","T18","T21","T24","T29") & ANO.geo$hovedoekosystem_punkt!='fjell',])
-nrow(ANO.geo[ANO.geo$hovedtype_rute %in% list("T2") & ANO.geo$hovedoekosystem_punkt!='fjell',])
-nrow(ANO.geo[ANO.geo$hovedtype_rute %in% list("T13") & ANO.geo$hovedoekosystem_punkt!='fjell',])
-nrow(ANO.geo[ANO.geo$hovedtype_rute %in% list("T16") & ANO.geo$hovedoekosystem_punkt!='fjell',])
-# all natopen ANO points with a NiN-type represented in the reference
-nrow(ANO.geo[ANO.geo$hovedtype_rute %in% unique(gsub("-", "",substr(natopen.ref.cov.val$grunn,1,3))) & ANO.geo$hovedoekosystem_punkt!='fjell',])
-# leaving us with a total of 272 ANO-points with naturally open ecosystems that are not in the mountains
-ANO.natopen <- ANO.geo[ANO.geo$hovedtype_rute %in% unique(gsub("-", "",substr(natopen.ref.cov.val$grunn,1,3))) & ANO.geo$hovedoekosystem_punkt!='fjell',]
-ANO.natopen <- ANO.natopen[!is.na(ANO.natopen$kartleggingsenhet_1m2),]
-head(ANO.natopen)
-# update row-numbers
-row.names(ANO.natopen) <- 1:nrow(ANO.natopen)
-head(ANO.natopen)
-dim(ANO.natopen)
-colnames(ANO.natopen)
-
-length(levels(as.factor(ANO.natopen$ano_flate_id)))
-length(levels(as.factor(ANO.natopen$ano_punkt_id)))
-summary(as.factor(ANO.natopen$ano_punkt_id))
-# one point is double
-ANO.natopen[ANO.natopen$ano_punkt_id=="ANO0084_51",] # double registration of # 51
-ANO.geo[ANO.geo$ano_punkt_id=="ANO0084_51",] # double registration of # 51
-
-ANO.geo[ANO.geo$ano_flate_id=="ANO0084","ano_punkt_id"] # also # 62 is registered double
-ANO.geo[ANO.geo$ano_punkt_id=="ANO0084_62",] # but this is not a natopen-type
-# seems to be a legit registration of a naturally open type on both ANO-points # 51.
-# Both points # 22, 35, 44, and 53 are missing, so we simply assign the 2nd # 51 to # 53 for this analysis
-ANO.natopen[ANO.natopen$ano_punkt_id=="ANO0084_51" & !is.na(ANO.natopen$ano_punkt_id),][2,"ano_punkt_id"] <- "ANO0084_53"
-ANO.natopen[ANO.natopen$ano_flate_id=="ANO0084","ano_punkt_id"]
-summary(as.factor(ANO.natopen$ano_punkt_id))
-
-#ANO.natopen <- ANO.natopen[-206,]
-#row.names(ANO.natopen) <- 1:nrow(ANO.natopen) # update row-numbers
-
-unique(ANO.natopen$hovedoekosystem_punkt)
-unique(ANO.natopen$hovedtype_rute)
-unique(ANO.natopen$kartleggingsenhet_1m2)
-ANO.natopen$hovedtype_rute <- as.factor(ANO.natopen$hovedtype_rute)
-ANO.natopen$kartleggingsenhet_1m2 <- as.factor(ANO.natopen$kartleggingsenhet_1m2)
-summary(ANO.natopen$hovedtype_rute)
-summary(ANO.natopen$kartleggingsenhet_1m2)
-# we have no reference for overall T2 registrations, these 24 observations won't be evaluated
-ANO.natopen[ANO.natopen$kartleggingsenhet_1m2=="T2",] # were largely inaccessible and thus mapped from aerial pictures
-
-results.natopen.ANO <- list()
-ind <- unique(natopen.ref.cov.val$Ind)
-# choose columns for site description
-colnames(ANO.natopen)
-results.natopen.ANO[['original']] <- ANO.natopen
-# drop geometry
-st_geometry(results.natopen.ANO[['original']]) <- NULL
-results.natopen.ANO[['original']]
-
-# add columns for indicators
-nvar.site <- ncol(results.natopen.ANO[['original']])
-for (i in 1:length(ind) ) {results.natopen.ANO[['original']][,i+nvar.site] <- NA}
-colnames(results.natopen.ANO[['original']])[(nvar.site+1):(length(ind)+nvar.site)] <- paste(ind)
-for (i in (nvar.site+1):(length(ind)+nvar.site) ) {results.natopen.ANO[['original']][,i] <- as.numeric(results.natopen.ANO[['original']][,i])}
-summary(results.natopen.ANO[['original']])
-#results.natopen.ANO[['original']]$Region <- as.factor(results.natopen.ANO[['original']]$Region)
-results.natopen.ANO[['original']]$GlobalID <- as.factor(results.natopen.ANO[['original']]$GlobalID)
-results.natopen.ANO[['original']]$ano_flate_id <- as.factor(results.natopen.ANO[['original']]$ano_flate_id)
-results.natopen.ANO[['original']]$ano_punkt_id <- as.factor(results.natopen.ANO[['original']]$ano_punkt_id)
-results.natopen.ANO[['original']]$hovedoekosystem_punkt <- as.factor(results.natopen.ANO[['original']]$hovedoekosystem_punkt)
-#results.natopen.ANO[['original']]$Hovedoekosystem_rute  <- as.factor(results.natopen.ANO[['original']]$Hovedoekosystem_rute )
-results.natopen.ANO[['original']]$kartleggingsenhet_1m2 <- as.factor(results.natopen.ANO[['original']]$kartleggingsenhet_1m2)
-results.natopen.ANO[['original']]$hovedtype_rute    <- as.factor(results.natopen.ANO[['original']]$hovedtype_rute)
-
-
-# roll out
-results.natopen.ANO[['scaled']] <- results.natopen.ANO[['non-truncated']] <- results.natopen.ANO[['original']]
-
-```
-
-```{r, echo = T, eval = F}
-
-#### calculating scaled and non-truncated values for the indicators based on the dataset ####
-for (i in 1:nrow(ANO.natopen) ) {  #
-  tryCatch({
-    print(i)
-    print(paste(ANO.natopen$ano_flate_id[i]))
-    print(paste(ANO.natopen$ano_punkt_id[i]))
-#    ANO.natopen$Hovedoekosystem_sirkel[i]
-#    ANO.natopen$Hovedoekosystem_rute[i]
-
-
-
-    # if the ANO.hovedtype exists in the reference
-    if (ANO.natopen$hovedtype_rute[i] %in% gsub("-","",unique(substr(natopen.ref.cov.val$grunn,1,3))) ) {
-      
-      # if there is any species present in current ANO point  
-      if ( length(ANO.sp.ind[ANO.sp.ind$ParentGlobalID==as.character(ANO.natopen$GlobalID[i]),'Species']) > 0 ) {
-        
-
-        # Grime's C
-        
-        dat <- ANO.sp.ind[ANO.sp.ind$ParentGlobalID==as.character(ANO.natopen$GlobalID[i]),c('art_dekning','CC')]
-        results.natopen.ANO[['original']][i,'richness'] <- nrow(dat)
-        dat <- dat[!is.na(dat$CC),]
-        
-        if ( nrow(dat)>0 ) {
-          
-          val <- sum(dat[,'art_dekning'] * dat[,'CC'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
-          # lower part of distribution
-          if( ANO.natopen$kartleggingsenhet_1m2[i] %in% c("T2-C-7","T2-C-8") ) {
-            ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Rv']
-            lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Gv']
-          } else {
-            ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC1' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Rv']
-            lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC1' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Gv']
-          }
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC1' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'maxmin']
-          # coercing x into results.natopen.ANO dataframe
-          results.natopen.ANO[['scaled']][i,'CC1'] <- scal() 
-          results.natopen.ANO[['non-truncated']][i,'CC1'] <- scal.2() 
-          results.natopen.ANO[['original']][i,'CC1'] <- val 
-          
-          # upper part of distribution
-          if( ANO.natopen$kartleggingsenhet_1m2[i] %in% c("T2-C-7","T2-C-8") ) {
-            ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Rv']
-            lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Gv']
-          } else {
-            ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC2' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Rv']
-            lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC2' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Gv']
-          }          
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC2' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'maxmin']
-          # coercing x into results.natopen.ANO dataframe
-          results.natopen.ANO[['scaled']][i,'CC2'] <- scal() 
-          results.natopen.ANO[['non-truncated']][i,'CC2'] <- scal.2() 
-          results.natopen.ANO[['original']][i,'CC2'] <- val
-        }
-          
-        
-        # Grime's S
-        dat <- ANO.sp.ind[ANO.sp.ind$ParentGlobalID==as.character(ANO.natopen$GlobalID[i]),c('art_dekning','SS')]
-        results.natopen.ANO[['original']][i,'richness'] <- nrow(dat)
-        dat <- dat[!is.na(dat$SS),]
-        
-        if ( nrow(dat)>0 ) {
-          
-          val <- sum(dat[,'art_dekning'] * dat[,'SS'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
-          # lower part of distribution
-          if( ANO.natopen$kartleggingsenhet_1m2[i] %in% c("T2-C-7","T2-C-8") ) {
-            ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Rv']
-            lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Gv']
-          } else {
-            ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS1' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Rv']
-            lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS1' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Gv']
-          }          
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS1' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'maxmin']
-          # coercing x into results.natopen.ANO dataframe
-          results.natopen.ANO[['scaled']][i,'SS1'] <- scal() 
-          results.natopen.ANO[['non-truncated']][i,'SS1'] <- scal.2() 
-          results.natopen.ANO[['original']][i,'SS1'] <- val 
-          
-          # upper part of distribution
-          if( ANO.natopen$kartleggingsenhet_1m2[i] %in% c("T2-C-7","T2-C-8") ) {
-            ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Rv']
-            lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Gv']
-          } else {
-            ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS2' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Rv']
-            lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS2' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Gv']
-          }          
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS2' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'maxmin']
-          # coercing x into results.natopen.ANO dataframe
-          results.natopen.ANO[['scaled']][i,'SS2'] <- scal() 
-          results.natopen.ANO[['non-truncated']][i,'SS2'] <- scal.2() 
-          results.natopen.ANO[['original']][i,'SS2'] <- val
-        }
-        
-        
-        # Grime's R
-        dat <- ANO.sp.ind[ANO.sp.ind$ParentGlobalID==as.character(ANO.natopen$GlobalID[i]),c('art_dekning','RR')]
-        results.natopen.ANO[['original']][i,'richness'] <- nrow(dat)
-        dat <- dat[!is.na(dat$RR),]
-        
-        if ( nrow(dat)>0 ) {
-          
-          val <- sum(dat[,'art_dekning'] * dat[,'RR'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
-          # lower part of distribution
-          if( ANO.natopen$kartleggingsenhet_1m2[i] %in% c("T2-C-7","T2-C-8") ) {
-            ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Rv']
-            lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Gv']
-          } else {
-            ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR1' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Rv']
-            lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR1' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Gv']
-          }          
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR1' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'maxmin']
-          # coercing x into results.natopen.ANO dataframe
-          results.natopen.ANO[['scaled']][i,'RR1'] <- scal() 
-          results.natopen.ANO[['non-truncated']][i,'RR1'] <- scal.2() 
-          results.natopen.ANO[['original']][i,'RR1'] <- val 
-          
-          # upper part of distribution
-          if( ANO.natopen$kartleggingsenhet_1m2[i] %in% c("T2-C-7","T2-C-8") ) {
-            ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Rv']
-            lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Gv']
-          } else {
-            ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR2' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Rv']
-            lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR2' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Gv']
-          }          
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR2' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'maxmin']
-          # coercing x into results.natopen.ANO dataframe
-          results.natopen.ANO[['scaled']][i,'RR2'] <- scal() 
-          results.natopen.ANO[['non-truncated']][i,'RR2'] <- scal.2() 
-          results.natopen.ANO[['original']][i,'RR2'] <- val
-        }
-        
-        
-          # Light
-          dat <- ANO.sp.ind[ANO.sp.ind$ParentGlobalID==as.character(ANO.natopen$GlobalID[i]),c('art_dekning','Light')]
-          results.natopen.ANO[['original']][i,'richness'] <- nrow(dat)
-          dat <- dat[!is.na(dat$Light),]
-          
-          if ( nrow(dat)>0 ) {
-            
-            val <- sum(dat[,'art_dekning'] * dat[,'Light'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
-            # lower part of distribution
-            if( ANO.natopen$kartleggingsenhet_1m2[i] %in% c("T2-C-7","T2-C-8") ) {
-              ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Rv']
-              lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Gv']
-            } else {
-              ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light1' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Rv']
-              lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light1' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Gv']
-            }            
-            maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light1' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'maxmin']
-            # coercing x into results.natopen.ANO dataframe
-            results.natopen.ANO[['scaled']][i,'Light1'] <- scal() 
-            results.natopen.ANO[['non-truncated']][i,'Light1'] <- scal.2() 
-            results.natopen.ANO[['original']][i,'Light1'] <- val 
-            
-            # upper part of distribution
-            if( ANO.natopen$kartleggingsenhet_1m2[i] %in% c("T2-C-7","T2-C-8") ) {
-              ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Rv']
-              lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Gv']
-            } else {
-              ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light2' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Rv']
-              lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light2' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Gv']
-            }            
-            maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light2' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'maxmin']
-            # coercing x into results.natopen.ANO dataframe
-            results.natopen.ANO[['scaled']][i,'Light2'] <- scal() 
-            results.natopen.ANO[['non-truncated']][i,'Light2'] <- scal.2() 
-            results.natopen.ANO[['original']][i,'Light2'] <- val
-          }
-          
-          
-         
-          
-          # Nitrogen
-          dat <- ANO.sp.ind[ANO.sp.ind$ParentGlobalID==as.character(ANO.natopen$GlobalID[i]),c('art_dekning','Nitrogen')]
-          results.natopen.ANO[['original']][i,'richness'] <- nrow(dat)
-          dat <- dat[!is.na(dat$Nitrogen),]
-          
-          if ( nrow(dat)>0 ) {
-            
-            val <- sum(dat[,'art_dekning'] * dat[,'Nitrogen'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
-            # lower part of distribution
-            if( ANO.natopen$kartleggingsenhet_1m2[i] %in% c("T2-C-7","T2-C-8") ) {
-              ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Rv']
-              lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Gv']
-            } else {
-              ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen1' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Rv']
-              lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen1' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Gv']
-            }            
-            maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen1' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'maxmin']
-            # coercing x into results.natopen.ANO dataframe
-            results.natopen.ANO[['scaled']][i,'Nitrogen1'] <- scal() 
-            results.natopen.ANO[['non-truncated']][i,'Nitrogen1'] <- scal.2() 
-            results.natopen.ANO[['original']][i,'Nitrogen1'] <- val 
-            
-            # upper part of distribution
-            if( ANO.natopen$kartleggingsenhet_1m2[i] %in% c("T2-C-7","T2-C-8") ) {
-              ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Rv']
-              lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Gv']
-            } else {
-              ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen2' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Rv']
-              lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen2' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Gv']
-            }            
-            maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen2' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'maxmin']
-            # coercing x into results.natopen.ANO dataframe
-            results.natopen.ANO[['scaled']][i,'Nitrogen2'] <- scal() 
-            results.natopen.ANO[['non-truncated']][i,'Nitrogen2'] <- scal.2() 
-            results.natopen.ANO[['original']][i,'Nitrogen2'] <- val
-          }
-          
-          
-
-
-          
-          
-          # Soil_disturbance
-          dat <- ANO.sp.ind[ANO.sp.ind$ParentGlobalID==as.character(ANO.natopen$GlobalID[i]),c('art_dekning','Soil_disturbance')]
-          results.natopen.ANO[['original']][i,'richness'] <- nrow(dat)
-          dat <- dat[!is.na(dat$Soil_disturbance),]
-          
-          if ( nrow(dat)>0 ) {
-            
-            val <- sum(dat[,'art_dekning'] * dat[,'Soil_disturbance'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
-            # lower part of distribution
-            if( ANO.natopen$kartleggingsenhet_1m2[i] %in% c("T2-C-7","T2-C-8") ) {
-              ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Rv']
-              lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Gv']
-            } else {
-              ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance1' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Rv']
-              lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance1' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Gv']
-            }           
-            maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance1' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'maxmin']
-            # coercing x into results.natopen.ANO dataframe
-            results.natopen.ANO[['scaled']][i,'Soil_disturbance1'] <- scal() 
-            results.natopen.ANO[['non-truncated']][i,'Soil_disturbance1'] <- scal.2() 
-            results.natopen.ANO[['original']][i,'Soil_disturbance1'] <- val 
-            
-            # upper part of distribution
-            if( ANO.natopen$kartleggingsenhet_1m2[i] %in% c("T2-C-7","T2-C-8") ) {
-              ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Rv']
-              lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),"_BN",sep=""),'Gv']
-            } else {
-              ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance2' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Rv']
-              lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance2' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'Gv']
-            }
-            maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance2' & natopen.ref.cov.val$grunn==as.character(results.natopen.ANO[['original']][i,"kartleggingsenhet_1m2"]),'maxmin']
-            # coercing x into results.natopen.ANO dataframe
-            results.natopen.ANO[['scaled']][i,'Soil_disturbance2'] <- scal() 
-            results.natopen.ANO[['non-truncated']][i,'Soil_disturbance2'] <- scal.2() 
-            results.natopen.ANO[['original']][i,'Soil_disturbance2'] <- val
-          }
-          
-          
-          
-        }
-      }
-      
-
-    
-  }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
-}
-
-# for using both sides of the plant indicators
-results.natopen.ANO[['2-sided']] <- results.natopen.ANO[['non-truncated']]
-
-# remove values >1 for 2-sided indicators
-results.natopen.ANO[['2-sided']]$CC1[results.natopen.ANO[['2-sided']]$CC1>1] <- NA
-results.natopen.ANO[['2-sided']]$CC2[results.natopen.ANO[['2-sided']]$CC2>1] <- NA
-
-results.natopen.ANO[['2-sided']]$SS1[results.natopen.ANO[['2-sided']]$SS1>1] <- NA
-results.natopen.ANO[['2-sided']]$SS2[results.natopen.ANO[['2-sided']]$SS2>1] <- NA
-
-results.natopen.ANO[['2-sided']]$RR1[results.natopen.ANO[['2-sided']]$RR1>1] <- NA
-results.natopen.ANO[['2-sided']]$RR2[results.natopen.ANO[['2-sided']]$RR2>1] <- NA
-
-results.natopen.ANO[['2-sided']]$Light1[results.natopen.ANO[['2-sided']]$Light1>1] <- NA
-results.natopen.ANO[['2-sided']]$Light2[results.natopen.ANO[['2-sided']]$Light2>1] <- NA
-
-results.natopen.ANO[['2-sided']]$Nitrogen1[results.natopen.ANO[['2-sided']]$Nitrogen1>1] <- NA
-results.natopen.ANO[['2-sided']]$Nitrogen2[results.natopen.ANO[['2-sided']]$Nitrogen2>1] <- NA
-
-results.natopen.ANO[['2-sided']]$Soil_disturbance1[results.natopen.ANO[['2-sided']]$Soil_disturbance1>1] <- NA
-results.natopen.ANO[['2-sided']]$Soil_disturbance2[results.natopen.ANO[['2-sided']]$Soil_disturbance2>1] <- NA
-
-```
-
-and for GRUK:
 ```{r, include=FALSE}
 
 colnames(GRUK.variables)
