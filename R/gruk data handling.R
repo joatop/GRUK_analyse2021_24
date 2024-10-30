@@ -364,8 +364,25 @@ unique(NiN.natopen[is.na(NiN.natopen$Light) & is.na(NiN.natopen$Nitrogen) & is.n
 
 # fix species name issues
 natopen_NiN_ref <- natopen_NiN_ref %>% 
+  mutate(sp=str_replace(sp,"Acinos arvensis", "Clinopodium acinos")) %>%
+  mutate(sp=str_replace(sp,"Aconitum septentrionale", "Aconitum lycoctonum")) %>%
+  mutate(sp=str_replace(sp,"Anagallis minima", "Lysimachia minima")) %>%  
+  mutate(sp=str_replace(sp,"Arabis wahlenbergii", "Arabis hirsuta")) %>% 
+  mutate(sp=str_replace(sp,"Aristavena setacea", "Deschampsia setacea")) %>% 
+  mutate(sp=str_replace(sp,"Atriplex lapponica", "Atriplex longipes")) %>% 
+  mutate(sp=str_replace(sp,"Atriplex praecox", "Atriplex longipes")) %>% 
+  mutate(sp=str_replace(sp,"Blysmopsis rufa", "Blysmus rufus")) %>% 
+  mutate(sp=str_replace(sp,"Carex mackenziei", "Carex norvegica")) %>% 
+  mutate(sp=str_replace(sp,"Carex xvacillans", "Carex vacillans")) %>% 
+  mutate(sp=str_replace(sp,"Cicerbita alpina", "Lactuca alpina")) %>% 
   mutate(sp=str_replace(sp,"Cirsium acaulon", "Cirsium acaule")) %>%
-  mutate(sp=str_replace(sp,"Hylotelephium maximum", "Hylotelephium telephium"))
+  mutate(sp=str_replace(sp,"Cotoneaster scandinavicus", "Cotoneaster integerrimus")) %>%
+  mutate(sp=str_replace(sp,"Dactylorhiza viridis", "Coeloglossum viride")) %>%
+  mutate(sp=str_replace(sp,"Hylotelephium maximum", "Hylotelephium telephium")) %>%
+  mutate(sp=str_replace(sp,"Poa alpigena", "Poa pratensis")) %>%
+  mutate(sp=str_replace(sp,"Poa humilis", "Poa pratensis")) %>%
+  mutate(sp=str_replace(sp,"Spergula marina", "Spergularia marina")) %>%
+  mutate(sp=str_replace(sp,"Spergularia salina", "Spergularia marina"))
 
 ind.dat[2556,'species'] <- "Saxifraga osloënsis"
 ind.dat[17,'species'] <- "Hierochloë odorata"
