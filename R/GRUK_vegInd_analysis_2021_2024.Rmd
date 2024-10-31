@@ -298,21 +298,21 @@ GRUK.ruter <- GRUK.ruter %>%
 names(GRUK.ruter)
 names(GRUK.sirkler)
 GRUK.variables <- merge(x=GRUK.ruter[,c(2,4:11,19:23,25,52:53)], 
-                    y=GRUK.sirkler[,c("GlobalID",
-                                      "Kartleggingsenhet 1:5000",
-                                      "Spor etter slitasje og slitasjebetinget erosjon (%)",
-                                      "Dekning % av nakent berg",
-                                      "Total dekning % av vedplanter i feltsjikt",
-                                      "Dekning % av busker i busksjikt",
-                                      "Dekning % av tresjikt",
-                                      "Dekning % av problemarter",
-                                      "Total dekning % av fremmede arter")], 
-                    by.x="GlobalID", by.y="GlobalID", all.x=T)
+                        y=GRUK.sirkler[,c("GlobalID",
+                                          "Kartleggingsenhet 1:5000",
+                                          "Spor etter slitasje og slitasjebetinget erosjon (%)",
+                                          "Dekning % av nakent berg",
+                                          "Total dekning % av vedplanter i feltsjikt",
+                                          "Dekning % av busker i busksjikt",
+                                          "Dekning % av tresjikt",
+                                          "Dekning % av problemarter",
+                                          "Total dekning % av fremmede arter")], 
+                        by.x="GlobalID", by.y="GlobalID", all.x=T)
 summary(GRUK.variables)
 
 ## merge information on condition and quality from GRUK.polygoner into GRUK.variables
 # transform GRUK.variables into spatial object
-GRUK.variables <- st_as_sf(GRUK.variables, coords = c("UTM33_E","UTM33_N"),remove=F, crs = 25833)
+#GRUK.variables <- st_as_sf(GRUK.variables, coords = c("UTM33_E","UTM33_N"),remove=F, crs = 25833)
 
 # transform GRUK.polygoner into spatial object
 GRUK.polygoner <- st_as_sf(GRUK.polygoner, wkt = "WKT" ,remove=F, crs = 25833)
@@ -322,57 +322,66 @@ tm_shape(GRUK.polygoner) +
   tm_polygons("PolygonID") +
   tm_shape(GRUK.variables) +
   tm_dots("RuteID")
-  
+
 # run a spatial join to get columns from GRUK.polygoner into GRUK.variables
-GRUK.variables <- st_join(GRUK.variables,GRUK.polygoner[,c(3:4,9,15,18,20,22,24,60)])
-names(GRUK.variables)[1:33]<-c("GlobalID","PolygonID.x","RuteID","RuteID_loknr",
-                               "Dekning%avkarplanterifeltsjikt","Dekning%avmoser","Dekning%avlav","Dekning%avstrø",
-                               "Dekning%avbarjord/grus/stein/berg","Precision","UTM33_E_ne","UTM33_N_ne",
-                               "UTM33_E_sw","UTM33_N_sw","areal(m2)","UTM33_N","UTM33_E","Kartleggingsenhet1:5000",
-                               "Sporetterslitasjeogslitasjebetingeterosjon(%)","Dekning%avnakentberg",
-                               "Totaldekning%avvedplanterifeltsjikt","Dekning%avbuskeribusksjikt","Dekning%avtresjikt",
-                               "Dekning%avproblemarter","Totaldekning%avfremmedearter","LokalitetID","PolygonID.y",
-                               "Kartleggingsdato","Lokalitetskvalitet","Kommune","Tilstand","Naturmangfold","NiNKartleggingsenheter")
+#GRUK.variables <- st_join(GRUK.variables,GRUK.polygoner[,c(3:4,9,15,18,20,22,24,60)])
+#names(GRUK.variables)[1:33]<-c("GlobalID","PolygonID.x","RuteID","RuteID_loknr",
+#                               "Dekning_karplanter_feltsjikt","Dekning_moser","Dekning_lav","Dekning_strø",
+#                               "Dekning_bar_substrat","Precision","UTM33_E_ne","UTM33_N_ne",
+#                               "UTM33_E_sw","UTM33_N_sw","areal(m2)","UTM33_N","UTM33_E","Kartleggingsenhet_1til5000",
+#                               "erosjon_prosent","Dekning_nakentberg",
+#                               "Totaldekning_vedplanter_feltsjikt","Dekning_busker_busksjikt","Dekning_tresjikt",
+#                               "Dekning_problemarter","Totaldekning_fremmedearter","LokalitetID","PolygonID.y",
+#                               "Kartleggingsdato","Lokalitetskvalitet","Kommune","Tilstand","Naturmangfold","NiNKartleggingsenheter")
 
 # check how good the spatial join worked
-cbind(GRUK.variables$PolygonID.x,GRUK.variables2$PolygonID.y)
-GRUK.variables[7,]
-GRUK.polygoner[GRUK.polygoner$PolygonID=="46-2",]
+#cbind(GRUK.variables$PolygonID.x,GRUK.variables$PolygonID.y)
+#GRUK.variables[7,]
+#GRUK.polygoner[GRUK.polygoner$PolygonID=="46-2",]
 # some points could not be matched to polygons -> merge by PolygonID instead, drop geometry of GRUK.variables first
 GRUK.variables <- st_drop_geometry(GRUK.variables)
+names(GRUK.variables)
+names(GRUK.polygoner)
 GRUK.variables <- merge(x=GRUK.variables, 
                         y=GRUK.polygoner[,c(3:4,9,15,18,20,22,24)], 
                         by.x="PolygonID", by.y="PolygonID", all.x=T)
 summary(GRUK.variables) 
 summary(as.factor(GRUK.variables$Tilstand)) # no unexpected NA's
 
+# edit the column names
+names(GRUK.variables)[1:32]<-c("PolygonID","GlobalID","RuteID","RuteID_loknr",
+                         "Dekning_karplanter_feltsjikt","Dekning_moser",
+                         "Dekning_lav","Dekning_strø",
+                         "Dekning_bar_substrat","Precision",
+                         "UTM33_E_ne","UTM33_N_ne","UTM33_E_sw","UTM33_N_sw",
+                         "areal_m2","UTM33_N","UTM33_E","Kartleggingsenhet_1til5000",
+                         "erosjon_prosent","Dekning_nakentberg",
+                         "Totaldekning_vedplanter_feltsjikt","Dekning_busker_busksjikt",
+                         "Dekning_tresjikt","Dekning_problemarter","Totaldekning_fremmedearter",
+                         "LokalitetID","Aar","Lokalitetskvalitet","Kommune","Tilstand",
+                         "Naturmangfold","NiNKartleggingsenheter")
+
+
 
 ## adding information on ecosystem and condition variables to species+indicator data
 names(GRUK.species.ind)
 names(GRUK.variables)
 GRUK.species.ind <- merge(x=GRUK.species.ind, 
-                          y=GRUK.variables[,-c(2:3)], 
+                          y=GRUK.variables[,-c(1,3)], 
                           by.x="ParentGlobalID", by.y="GlobalID", all.x=T)
 summary(GRUK.species.ind)
-# fixing variable names and types
-names(GRUK.species.ind)<-c("ParentGlobalID","Species","art_dekning","PolygonID",
-                           "RuteID","CC","SS","RR","Light","Nitrogen",
-                           "Soil_disturbance","RuteID_loknr","Dekning_karplanter_feltsjikt",
-                           "Dekning_moser","Dekning_lav","Dekning_strø",
-                           "Dekning_bar_substrat","Precision",
-                           "UTM33_E_ne","UTM33_N_ne","UTM33_E_sw","UTM33_N_sw",
-                           "areal_m2","UTM33_N","UTM33_E","Kartleggingsenhet_1til5000",
-                           "erosion_prosent",
-                           "Dekning_nakentberg","Totaldekning_vedplanter_feltsjikt",
-                           "Dekning_busker_busksjikt","Dekning_tresjikt",
-                           "Dekning_problemarter","Totaldekning_fremmedearter")
-
+# fixing variable types
 GRUK.species.ind <- GRUK.species.ind %>% 
   mutate(Species = as.factor(Species)) %>%
   mutate(areal_m2 = as.numeric(areal_m2)) %>%
   mutate(Kartleggingsenhet_1til5000 = as.factor(Kartleggingsenhet_1til5000)) %>%
   mutate(Dekning_nakentberg = as.numeric(Dekning_nakentberg)) %>%
-  mutate(Dekning_problemarter = as.numeric(Dekning_problemarter))
+  mutate(Dekning_problemarter = as.numeric(Dekning_problemarter)) %>%
+  mutate(Lokalitetskvalitet = as.factor(Lokalitetskvalitet)) %>%
+  mutate(Kommune = as.factor(Kommune)) %>%
+  mutate(Tilstand = as.factor(Tilstand)) %>%
+  mutate(Naturmangfold = as.factor(Naturmangfold)) %>%
+  mutate(NiNKartleggingsenheter = as.factor(NiNKartleggingsenheter))
 summary(GRUK.species.ind)
 
 # trimming away the points without information on NiN, species or cover  
@@ -386,7 +395,6 @@ GRUK.species.ind <- GRUK.species.ind[!is.na(GRUK.species.ind$art_dekning),]
 
 summary(GRUK.species.ind)
 head(GRUK.species.ind)
-
 
 
 ### reference data - data handling
@@ -780,13 +788,40 @@ scal <- function() {
   
 }
 
+## scaling function without truncation
+scal.2 <- function() {
+  # place to hold the result
+  x <- numeric()
+  if (maxmin < ref) {
+    # values >= the reference value estimated from the linear relationship for lim < x < ref (line below)
+    if (val >= ref) {x <- (l.s + (val-lim) * ( (r.s-l.s) / (ref-lim) ) )}
+    # values < the reference value and >= the limit value can be deducted from the linear relationship between these two
+    if (val < ref & val >= lim) {x <- (l.s + (val-lim) * ( (r.s-l.s) / (ref-lim) ) )}
+    # values < the limit value and > maxmin can be deducted from the linear relationship between these two
+    if (val < lim & val > maxmin) {x <- (a.s + (val-maxmin) * ( (l.s-a.s) / (lim-maxmin) ) )}
+    # value equal or lower than maxmin
+    if (val <= maxmin) {x <-0}
+  } else {
+    # values <= the reference value estimated from the linear relationship for lim < x < ref (line below)
+    if (val <= ref) {x <- ( r.s - ( (r.s - l.s) * (val - ref) / (lim - ref) ) )}
+    # values > the reference value and <= the limit value can be deducted from the linear relationship between these two
+    if (val > ref & val <= lim) {x <- ( r.s - ( (r.s - l.s) * (val - ref) / (lim - ref) ) )}
+    # values > the limit value and < maxmin can be deducted from the linear relationship between these two
+    if (val > lim & val < maxmin) {x <- ( l.s - (l.s * (val - lim) / (maxmin - lim) ) )}
+    # value equal og larger than maxmin
+    if (val >= maxmin) {x <-0}
+  }
+  return(x)
+  
+}
+
 ```
 
 We then can prepare a list of data frames to hold the results and perform the scaling according to the principles described in NINA report 1967 (Töpper and Jakobsson 2021)
 ```{r, include=FALSE}
 
 colnames(GRUK.variables)
-levels(as.factor(GRUK.variables$Kartleggingsenhet)) # NiN types in data
+levels(as.factor(GRUK.variables$Kartleggingsenhet_1til5000)) # NiN types in data
 levels(natopen.ref.cov.val$grunn) # NiN types in reference
 #### creating dataframe to hold the results for natopens ####
 # all GRUK points
@@ -800,14 +835,14 @@ head(GRUK.natopen)
 dim(GRUK.natopen)
 colnames(GRUK.natopen)
 
-length(levels(as.factor(GRUK.natopen$Flate_ID)))
-length(levels(as.factor(GRUK.natopen$uPunkt_ID)))
-summary(as.factor(GRUK.natopen$uPunkt_ID))
+length(levels(as.factor(GRUK.natopen$PolygonID)))
+length(levels(as.factor(GRUK.natopen$RuteID)))
+summary(as.factor(GRUK.natopen$RuteID))
 # none are double
 
-unique(GRUK.natopen$Kartleggingsenhet)
-GRUK.natopen$Kartleggingsenhet <- as.factor(GRUK.natopen$Kartleggingsenhet)
-summary(GRUK.natopen$Kartleggingsenhet)
+unique(GRUK.natopen$Kartleggingsenhet_1til5000)
+GRUK.natopen$Kartleggingsenhet_1til5000 <- as.factor(GRUK.natopen$Kartleggingsenhet_1til5000)
+summary(GRUK.natopen$Kartleggingsenhet_1til5000)
 
 results.natopen.GRUK <- list()
 ind <- unique(natopen.ref.cov.val$Ind)
@@ -815,7 +850,7 @@ ind <- unique(natopen.ref.cov.val$Ind)
 colnames(GRUK.natopen)
 results.natopen.GRUK[['original']] <- GRUK.natopen
 # drop geometry
-st_geometry(results.natopen.GRUK[['original']]) <- NULL
+#st_geometry(results.natopen.GRUK[['original']]) <- NULL
 results.natopen.GRUK[['original']] <- as.data.frame(results.natopen.GRUK[['original']])
 
 # add columns for indicators
@@ -824,25 +859,26 @@ for (i in 1:length(ind) ) {results.natopen.GRUK[['original']][,i+nvar.site] <- N
 colnames(results.natopen.GRUK[['original']])[(nvar.site+1):(length(ind)+nvar.site)] <- paste(ind)
 for (i in (nvar.site+1):(length(ind)+nvar.site) ) {results.natopen.GRUK[['original']][,i] <- as.numeric(results.natopen.GRUK[['original']][,i])}
 summary(results.natopen.GRUK[['original']])
-#results.natopen.GRUK[['original']]$Region <- as.factor(results.natopen.GRUK[['original']]$Region)
+results.natopen.GRUK[['original']]$Kommune <- as.factor(results.natopen.GRUK[['original']]$Kommune)
 results.natopen.GRUK[['original']]$GlobalID <- as.factor(results.natopen.GRUK[['original']]$GlobalID)
-results.natopen.GRUK[['original']]$Flate_ID <- as.factor(results.natopen.GRUK[['original']]$Flate_ID)
-results.natopen.GRUK[['original']]$uPunkt_ID <- as.factor(results.natopen.GRUK[['original']]$uPunkt_ID)
-results.natopen.GRUK[['original']]$Kartleggingsenhet <- as.factor(results.natopen.GRUK[['original']]$Kartleggingsenhet)
+results.natopen.GRUK[['original']]$PolygonID <- as.factor(results.natopen.GRUK[['original']]$PolygonID)
+results.natopen.GRUK[['original']]$uRute_ID <- as.factor(results.natopen.GRUK[['original']]$RuteID)
+results.natopen.GRUK[['original']]$Kartleggingsenhet_1til5000 <- as.factor(results.natopen.GRUK[['original']]$Kartleggingsenhet_1til5000)
 
 # roll out
 results.natopen.GRUK[['scaled']] <- results.natopen.GRUK[['non-truncated']] <- results.natopen.GRUK[['original']]
 
+
 ```
 
-```{r, echo = T, eval = F}
+```{r, echo = T, eval = F, include = F}
 
 #### calculating scaled and non-truncated values for the indicators based on the dataset ####
 for (i in 1:nrow(GRUK.natopen) ) {  #
   tryCatch({
     print(i)
-    print(paste(GRUK.natopen$Flate_ID[i]))
-    print(paste(GRUK.natopen$uPunkt_ID[i]))
+    print(paste(GRUK.natopen$PolygonID[i]))
+    print(paste(GRUK.natopen$RuteID[i]))
     #    GRUK.natopen$Hovedoekosystem_sirkel[i]
     #    GRUK.natopen$Hovedoekosystem_rute[i]
     
@@ -865,18 +901,18 @@ for (i in 1:nrow(GRUK.natopen) ) {  #
           
           val <- sum(dat[,'art_dekning'] * dat[,'CC'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
           # lower part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),'maxmin']
+          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
           # coercing x into results.natopen.GRUK dataframe
           results.natopen.GRUK[['scaled']][i,'CC1'] <- scal() 
           results.natopen.GRUK[['non-truncated']][i,'CC1'] <- scal.2() 
           results.natopen.GRUK[['original']][i,'CC1'] <- val 
           
           # upper part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),'maxmin']
+          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
           # coercing x into results.natopen.GRUK dataframe
           results.natopen.GRUK[['scaled']][i,'CC2'] <- scal() 
           results.natopen.GRUK[['non-truncated']][i,'CC2'] <- scal.2() 
@@ -894,18 +930,18 @@ for (i in 1:nrow(GRUK.natopen) ) {  #
           
           val <- sum(dat[,'art_dekning'] * dat[,'SS'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
           # lower part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),'maxmin']
+          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
           # coercing x into results.natopen.GRUK dataframe
           results.natopen.GRUK[['scaled']][i,'SS1'] <- scal() 
           results.natopen.GRUK[['non-truncated']][i,'SS1'] <- scal.2() 
           results.natopen.GRUK[['original']][i,'SS1'] <- val
           
           # upper part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),'maxmin']
+          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
           # coercing x into results.natopen.GRUK dataframe
           results.natopen.GRUK[['scaled']][i,'SS2'] <- scal() 
           results.natopen.GRUK[['non-truncated']][i,'SS2'] <- scal.2() 
@@ -923,18 +959,18 @@ for (i in 1:nrow(GRUK.natopen) ) {  #
           
           val <- sum(dat[,'art_dekning'] * dat[,'RR'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
           # lower part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),'maxmin']
+          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
           # coercing x into results.natopen.GRUK dataframe
           results.natopen.GRUK[['scaled']][i,'RR1'] <- scal() 
           results.natopen.GRUK[['non-truncated']][i,'RR1'] <- scal.2() 
           results.natopen.GRUK[['original']][i,'RR1'] <- val
           
           # upper part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),'maxmin']
+          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
           # coercing x into results.natopen.GRUK dataframe
           results.natopen.GRUK[['scaled']][i,'RR2'] <- scal() 
           results.natopen.GRUK[['non-truncated']][i,'RR2'] <- scal.2() 
@@ -952,18 +988,18 @@ for (i in 1:nrow(GRUK.natopen) ) {  #
           
           val <- sum(dat[,'art_dekning'] * dat[,'Light'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
           # lower part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),'maxmin']
+          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
           # coercing x into results.natopen.GRUK dataframe
           results.natopen.GRUK[['scaled']][i,'Light1'] <- scal() 
           results.natopen.GRUK[['non-truncated']][i,'Light1'] <- scal.2() 
           results.natopen.GRUK[['original']][i,'Light1'] <- val
           
           # upper part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),'maxmin']
+          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
           # coercing x into results.natopen.GRUK dataframe
           results.natopen.GRUK[['scaled']][i,'Light2'] <- scal() 
           results.natopen.GRUK[['non-truncated']][i,'Light2'] <- scal.2() 
@@ -984,9 +1020,9 @@ for (i in 1:nrow(GRUK.natopen) ) {  #
           
           val <- sum(dat[,'art_dekning'] * dat[,'Nitrogen'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
           # lower part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),'maxmin']
+          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
           # coercing x into results.natopen.GRUK dataframe
           results.natopen.GRUK[['scaled']][i,'Nitrogen1'] <- scal() 
           results.natopen.GRUK[['non-truncated']][i,'Nitrogen1'] <- scal.2() 
@@ -994,9 +1030,9 @@ for (i in 1:nrow(GRUK.natopen) ) {  #
           
 
           # upper part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),'maxmin']
+          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
           # coercing x into results.natopen.GRUK dataframe
           results.natopen.GRUK[['scaled']][i,'Nitrogen2'] <- scal() 
           results.natopen.GRUK[['non-truncated']][i,'Nitrogen2'] <- scal.2() 
@@ -1018,9 +1054,9 @@ for (i in 1:nrow(GRUK.natopen) ) {  #
           
           val <- sum(dat[,'art_dekning'] * dat[,'Soil_disturbance'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
           # lower part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),'maxmin']
+          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
           # coercing x into results.natopen.GRUK dataframe
           results.natopen.GRUK[['scaled']][i,'Soil_disturbance1'] <- scal() 
           results.natopen.GRUK[['non-truncated']][i,'Soil_disturbance1'] <- scal.2() 
@@ -1028,9 +1064,9 @@ for (i in 1:nrow(GRUK.natopen) ) {  #
           
 
           # upper part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet"]),'maxmin']
+          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
           # coercing x into results.natopen.GRUK dataframe
           results.natopen.GRUK[['scaled']][i,'Soil_disturbance2'] <- scal() 
           results.natopen.GRUK[['non-truncated']][i,'Soil_disturbance2'] <- scal.2() 
@@ -1070,6 +1106,8 @@ results.natopen.GRUK[['2-sided']]$Nitrogen2[results.natopen.GRUK[['2-sided']]$Ni
 results.natopen.GRUK[['2-sided']]$Soil_disturbance1[results.natopen.GRUK[['2-sided']]$Soil_disturbance1>1] <- NA
 results.natopen.GRUK[['2-sided']]$Soil_disturbance2[results.natopen.GRUK[['2-sided']]$Soil_disturbance2>1] <- NA
 
+#saveRDS(results.natopen.GRUK, "data/cache/results.natopen.GRUK.RDS")
+
 ```
 
 
@@ -1077,12 +1115,10 @@ results.natopen.GRUK[['2-sided']]$Soil_disturbance2[results.natopen.GRUK[['2-sid
 ```{r, include = F}
 
 # Use cache data
-results.natopen.ANO<-readRDS(paste0(here::here(),"/data/cache/results.natopen.ANO.RDS"))
 results.natopen.GRUK<-readRDS(paste0(here::here(),"/data/cache/results.natopen.GRUK.RDS"))
 ```
 
 ```{r}
-head(results.natopen.ANO[['2-sided']])
 head(results.natopen.GRUK[['2-sided']])
 ```
 #### Scaled value analyses
@@ -1092,41 +1128,6 @@ In order to visualize the results we need to rearrange the results-objects from 
 ```{r, message = FALSE}
 #### plotting scaled values by main ecosystem type ####
 ## continuing with 2-sided
-res.natopen.ANO <- results.natopen.ANO[['2-sided']]
-
-# make long version of the scaled value part
-res.natopen.ANO <-
-  res.natopen.ANO %>% 
-  pivot_longer(
-    cols = c("CC1","CC2",
-             "SS1","SS2",
-             "RR1","RR2",
-             "Light1","Light2",
-             "Nitrogen1","Nitrogen2",
-             "Soil_disturbance1","Soil_disturbance2"),
-    names_to = "fp_ind",
-    values_to = "scaled_value",
-    values_drop_na = FALSE
-  )
-
-# add original values as well
-res.natopen.ANO <- 
-  res.natopen.ANO %>% add_column(original = results.natopen.ANO[['original']] %>% 
-                               pivot_longer(
-                                 cols = c("CC1","CC2",
-                                          "SS1","SS2",
-                                          "RR1","RR2",
-                                          "Light1","Light2",
-                                          "Nitrogen1","Nitrogen2",
-                                          "Soil_disturbance1","Soil_disturbance2"),
-                                 names_to = NULL,
-                                 values_to = "original",
-                                 values_drop_na = FALSE
-                               ) %>%
-                               pull(original)
-  )
-
-# similarly for GRUK
 res.natopen.GRUK <- results.natopen.GRUK[['2-sided']]
 
 # make long version of the scaled value part
@@ -1167,45 +1168,8 @@ res.natopen.GRUK <-
 And we can show the resulting scaled values as Violin plots for each indicator and main ecosystem type 
 ```{r,echo=FALSE,message=FALSE, warning=FALSE}
 
-# making the plot, ANO, CSR-indicators
-ggplot(data=subset(res.natopen.ANO,!is.na(scaled_value) & fp_ind %in% c("CC1","SS1","RR1",
-                                                                        "CC2","SS2","RR2")), 
-       aes(x=factor(kartleggingsenhet_1m2), y=scaled_value, fill=fp_ind)) + 
-  geom_hline(yintercept=0.6, linetype="dashed") + 
-  geom_violin(color=NA) +
-  #  geom_boxplot(width=0.2, color="grey") +
-  geom_point(size=1, shape=16, color="black") +
-  facet_wrap(~factor(fp_ind,levels=c("CC1","SS1","RR1",
-                                     "CC2","SS2","RR2"),
-                     labels=c("CSR-C1","CSR-S1","CSR-R1",
-                                     "CSR-C2","CSR-S2","CSR-R2")
-                     ), ncol = 3) + 
-  xlab("Basic ecosystem type") + 
-  ylab("Scaled indicator value (ANO data, CSR indicators)") +
-  scale_fill_discrete(labels=c("CSR-C1","CSR-S1","CSR-R1",
-                                     "CSR-C2","CSR-S2","CSR-R2")) + 
-  theme(legend.position="none") +
-  theme(axis.text.x = element_text(angle = -45, vjust = 0.5, hjust=0.2))
-
-# making the plot, ANO, Tyler-indicators
-ggplot(data=subset(res.natopen.ANO,!is.na(scaled_value) & fp_ind %in% c("Light1","Nitrogen1","Soil_disturbance1",
-                                                                        "Light2","Nitrogen2","Soil_disturbance2")), 
-       aes(x=factor(kartleggingsenhet_1m2), y=scaled_value, fill=fp_ind)) + 
-  geom_hline(yintercept=0.6, linetype="dashed") + 
-  geom_violin(color=NA) +
-#  geom_boxplot(width=0.2, color="grey") +
-  geom_point(size=1, shape=16, color="black") +
-  facet_wrap(~factor(fp_ind,levels=c("Light1","Nitrogen1","Soil_disturbance1",
-                                     "Light2","Nitrogen2","Soil_disturbance2")), ncol = 3) + 
-  xlab("Basic ecosystem type") + 
-  ylab("Scaled indicator value (ANO data, Tyler indicators)") + 
-  theme(legend.position="none") +
-  theme(axis.text.x = element_text(angle = -45, vjust = 0.5, hjust=0.2))
-
-
-
 # making the plot, GRUK
-ggplot(res.natopen.GRUK, aes(x=factor(Kartleggingsenhet), y=scaled_value, fill=fp_ind)) + 
+ggplot(res.natopen.GRUK, aes(x=factor(Kartleggingsenhet_1til5000), y=scaled_value, fill=fp_ind)) + 
   geom_hline(yintercept=0.6, linetype="dashed") + 
   geom_violin(color = NA) +
   #  geom_boxplot(width=0.2, color="grey") +
@@ -1213,7 +1177,7 @@ ggplot(res.natopen.GRUK, aes(x=factor(Kartleggingsenhet), y=scaled_value, fill=f
   facet_wrap(~factor(fp_ind,levels=c("CC1","SS1","RR1","Light1","Nitrogen1","Soil_disturbance1",
                                      "CC2","SS2","RR2","Light2","Nitrogen2","Soil_disturbance2"),
                      labels=c("CSR-C1","CSR-S1","CSR-R1","Light1","Nitrogen1","Soil_disturbance1",
-                                     "CSR-C2","CSR-S2","CSR-R2","Light2","Nitrogen2","Soil_disturbance2")), ncol = 6) + 
+                              "CSR-C2","CSR-S2","CSR-R2","Light2","Nitrogen2","Soil_disturbance2")), ncol = 6) + 
   xlab("Basic ecosystem type") + 
   ylab("Scaled indicator value (GRUK data, all indicators)") + 
   theme(legend.position="none") +
@@ -1225,10 +1189,21 @@ The ANO results show a high frequency of too low CSR-R values (CSR-R1) and Soil 
 Increased nitrogen may be an effect of alien species, which the GRUK data records as a major pressure and problem for many monitoring sites.
 
 ```{r}
-colnames(res.natopen.GRUK)[38] <- "fremmedartsdekning"
-ggplot(res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Nitrogen2",], aes(x=fremmedartsdekning, y=scaled_value)) +
+ggplot(res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Light2",], aes(x=Totaldekning_fremmedearter, y=scaled_value)) +
   geom_point() +
-  xlab("Alien species cover (%)") + ylab("Scaled Nitrogen2 value (GRUK data)")
+  xlab("Alien species cover (%)") + ylab("Scaled Light2 value (GRUK data)")
+
+ggplot(res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Light2",], aes(x=Dekning_problemarter, y=scaled_value)) +
+  geom_point() +
+  xlab("Problem species cover (%)") + ylab("Scaled Light2 value (GRUK data)")
+
+ggplot(res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Light2",], aes(x=Dekning_busker_busksjikt, y=scaled_value)) +
+  geom_point() +
+  xlab("Shrub species cover (%)") + ylab("Scaled Light2 value (GRUK data)")
+
+ggplot(res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Light2",], aes(x=Dekning_tresjikt, y=scaled_value)) +
+  geom_point() +
+  xlab("Tree species cover (%)") + ylab("Scaled Light2 value (GRUK data)")
 ```
 And indeed, we can see that very high alien species cover predicts almost only poor scores in the Nitrogen2 indicator.
 
@@ -1237,19 +1212,18 @@ We can also show the results as a map, for instance for CSR-R1 (the lower rudera
 ```{r, echo=FALSE, warning=FALSE,message = FALSE}
 #### scaled value maps ####
 # keep wide format and add geometry again
-res.natopen.ANO2 <- results.natopen.ANO[['2-sided']]
-st_geometry(res.natopen.ANO2) <- st_geometry(ANO.natopen)
-
 res.natopen.GRUK2 <- results.natopen.GRUK[['2-sided']]
-st_geometry(res.natopen.GRUK2) <- st_geometry(GRUK.natopen)
-  
-nor <- st_read("data/outlineOfNorway_EPSG25833.shp")%>%
-  st_as_sf() %>%
-  st_transform(crs = st_crs(ANO.geo))
+res.natopen.GRUK2 <- st_as_sf(res.natopen.GRUK2, coords = c("UTM33_E","UTM33_N"), remove=F, crs = 25833)
 
-reg <- st_read("data/regions.shp")%>%
-  st_as_sf() %>%
-  st_transform(crs = st_crs(ANO.geo))
+## Import Norway map
+nor <- st_read("data/mapdata/Norway outline/outlineOfNorway_EPSG25833.shp") #%>%
+#  st_as_sf() %>%
+#  st_transform(crs = st_crs(myr))
+
+## Import region map
+reg <- st_read("data/mapdata/Norway outline/regions.shp") #%>%
+#  st_as_sf() %>%
+#  st_transform(crs = st_crs(ANO.geo))
 
 # change region names to something R-friendly
 #reg$region
@@ -1260,284 +1234,38 @@ regnor <- st_intersection(reg,nor)
 
 
 ## scaled value maps
-# ANO, RR1 (lower indicator)
+
+# GRUK, Light2 (upper indicator)
 tm_shape(regnor) +
   tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
   tm_borders() +
-  tm_shape(res.natopen.ANO2) +
-  tm_dots('RR1',midpoint=NA, palette=tmaptools::get_brewer_pal("YlOrRd", 7, plot = FALSE), scale=2, legend.show = FALSE) + # 
-  tm_layout(main.title = "Ruderal index (lower), natopen ANO",legend.position = c("right", "bottom"), main.title.size=1.2) + 
-  tm_add_legend(type = "fill", 
-                col = c(tmaptools::get_brewer_pal("YlOrRd", 6, plot = FALSE),'grey'),
-                labels = c("0.4 - 0.5", "0.5 - 0.6", "0.6 - 0.7", 
-                           "0.7 - 0.8", "0.8 - 0.9", "0.9 - 1.0", "NA"),
-                title = "index values")
-
-
-# GRUK, Nitrogen2 (upper indicator)
-tm_shape(regnor) +
-  tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
-  tm_borders() +
+  tm_graticules() +
   tm_shape(res.natopen.GRUK2) +
-  tm_dots('Nitrogen2',midpoint=NA, palette=tmaptools::get_brewer_pal("YlOrRd", 7, plot = FALSE), scale=2, legend.show = FALSE) + # 
-  tm_layout(main.title = "Nitrogen index (upper), natopen GRUK",legend.position = c("right", "bottom"), main.title.size=1.2) + 
+  tm_dots('Light2',midpoint=NA, palette=tmaptools::get_brewer_pal("YlOrRd", 7, plot = FALSE), scale=2, legend.show = FALSE) + # 
+  tm_layout(main.title = "Light index (upper), natopen GRUK",legend.position = c("right", "bottom"), main.title.size=1.2) + 
   tm_add_legend(type = "fill", 
                 col = c(tmaptools::get_brewer_pal("YlOrRd", 7, plot = FALSE),'grey'),
                 labels = c("0.3 - 0.4", "0.4 - 0.5", "0.5 - 0.6", "0.6 - 0.7", 
                            "0.7 - 0.8", "0.8 - 0.9", "0.9 - 1.0", "NA"),
                 title = "index values")
+
 
 ```
 For GRUK we can zoom in on the area around the Oslofjord...
 
 ```{r}
-boks <- st_bbox(c(xmin = 10.3, xmax = 10.8, ymax = 59.95, ymin = 59.4), crs = st_crs(4326))
+boks <- st_bbox(c(xmin = 194100, xmax = 263300, ymax = 6649700, ymin = 6549000), crs = st_crs(25833))
 
-tm_shape(regnor,bbox=boks) +
+tm_shape(regnor, bbox=boks) +
   tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
   tm_borders() +
+  tm_graticules() +
   tm_shape(res.natopen.GRUK2) +
-  tm_dots('Nitrogen2',midpoint=NA, palette=tmaptools::get_brewer_pal("YlOrRd", 7, plot = FALSE), scale=3, legend.show = FALSE) + # 
-  tm_layout(main.title = "Nitrogen index (upper), natopen GRUK",legend.position = c("right", "bottom"), main.title.size=1.2) + 
+  tm_dots('Light2',midpoint=NA, palette=tmaptools::get_brewer_pal("YlOrRd", 7, plot = FALSE), scale=3, legend.show = FALSE) + # 
+  tm_layout(main.title = "Light index (upper), natopen GRUK",legend.position = c("right", "bottom"), main.title.size=1.2) + 
   tm_add_legend(type = "fill", 
                 col = c(tmaptools::get_brewer_pal("YlOrRd", 7, plot = FALSE),'grey'),
                 labels = c("0.3 - 0.4", "0.4 - 0.5", "0.5 - 0.6", "0.6 - 0.7", 
                            "0.7 - 0.8", "0.8 - 0.9", "0.9 - 1.0", "NA"),
                 title = "index values")
 ```
-...but for ANO the colors and values of the data points on the map are hard to make out.
-
-### Regions - maps and statistics
-Alternatively we can calculate and show the region-wise means and their related standard errors. But note that calculating a simple mean would be inappropriate for these data. This is because:
-(i) the scaled data are bound between 0 and 1, and thus follow a beta-distribution rather than a Gaussian one
-(ii) both the ANO and the GRUK datasets have a nested structure
-
-Therefore, we need to (i) use a beta-model, that (ii) can account for the nested structure of the data.
-Here, we apply the following function using either a glmmTMB null-model with a beta-distribution, logit link, and the nesting as a random intercept, or a simple betareg null-model with logit link if the nesting is not extensive enough for a mixed model.
-```{r}
-
-expit <- function(L) exp(L) / (1+exp(L)) # since the beta-models use a logit link, we need to calculate the estimates back to the identity scale
-
-# the function performs a glmmTMB if there's >= 5 random levels in the nesting structure
-# if that is not the case, then the function performs a betareg if theres >= 2 observations
-# if that is not the case either, then the function returns the value of the single observation with NA standard error
-
-indmean.beta <- function(df) {
-
-  st_geometry(df) <- NULL
-  colnames(df) <- c("y","ran")
-  
-  if ( nrow(df[!is.na(df[,1]),]) >= 2 ) {
-    
-    if ( length(unique(df[!is.na(df[,1]),2])) >=5 ) {
-      
-      mod1 <- glmmTMB(y ~ 1 +(1|ran), family=beta_family(), data=df)
-      
-      return(c(
-        expit(summary( mod1 )$coefficients$cond[1]),
-        
-        expit( summary( mod1 )$coefficients$cond[1] + 
-                 summary( mod1 )$coefficients$cond[2] )-
-          expit( summary( mod1 )$coefficients$cond[1] ),
-        
-        nrow(df[!is.na(df$y),]),
-        summary( mod1 )$coefficients$cond[1],
-        summary( mod1 )$coefficients$cond[2]
-      ))
-      
-    } else {
-      
-      mod2 <- betareg(y ~ 1, data=df)
-      
-      return(c(
-        expit(summary( mod2 )$coefficients$mean[1]),
-        expit( summary( mod2 )$coefficients$mean[1] + 
-                 summary( mod2 )$coefficients$mean[2] )-
-          expit( summary( mod2 )$coefficients$mean[1] ),
-        nrow(df[!is.na(df$y),]),
-        summary( mod2 )$coefficients$mean[1],
-        summary( mod2 )$coefficients$mean[2]
-      ))
-      
-    }
-    
-  } else {
-    
-    return(c(df$y,NA,1,NA,NA))
-    
-  }
-
-}
-
-```
-
-```{r}
-# we have to join the ANO and GRUK results spatial objects with the Norway and region mask
-res.natopen.ANO2 = st_join(res.natopen.ANO2, regnor, left = TRUE)
-res.natopen.GRUK2 = st_join(res.natopen.GRUK2, regnor, left = TRUE)
-# we check if all there's any sitethat did not get a region assigned
-nrow(res.natopen.ANO2[is.na(res.natopen.ANO2$region),]) # no NA's for ANO
-nrow(res.natopen.GRUK2[is.na(res.natopen.GRUK2$region),]) # some points didn't get assigned to a region. Why?
-
-tm_shape(regnor, bbox = boks) +
-  tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
-  tm_borders() +
-  tm_shape(res.natopen.GRUK2[is.na(res.natopen.GRUK2$region),]) +
-  tm_dots('Nitrogen2',midpoint=NA, palette=tmaptools::get_brewer_pal("YlOrRd", 7, plot = FALSE), scale=2, legend.show = FALSE) + # 
-  tm_layout(main.title = "Nitrogen index (upper), natopen GRUK",legend.position = c("right", "bottom"), main.title.size=1.2) + 
-  tm_add_legend(type = "fill", 
-                col = c(tmaptools::get_brewer_pal("YlOrRd", 7, plot = FALSE),'grey'),
-                labels = c("0.3 - 0.4", "0.4 - 0.5", "0.5 - 0.6", "0.6 - 0.7", 
-                           "0.7 - 0.8", "0.8 - 0.9", "0.9 - 1.0", "NA"),
-                title = "index values")
-# they seem to lie in water
-# all sites but the southernmost one are in Eastern Norway, the remaining one in Southern Norway
-summary(res.natopen.GRUK2[is.na(res.natopen.GRUK2$region),"y"])
-res.natopen.GRUK2[is.na(res.natopen.GRUK2$region) & res.natopen.GRUK2$y<59.83,c("y","Flate_ID")] # site 123-4 is in Southern Norway
-res.natopen.GRUK2[res.natopen.GRUK2$Flate_ID=="123-4","region"] <- "Southern Norway"
-# and all the other region=NA observations are in Eastern Norway
-res.natopen.GRUK2[is.na(res.natopen.GRUK2$region),"region"] <- "Eastern Norway"
-nrow(res.natopen.GRUK2[is.na(res.natopen.GRUK2$region),]) # no NA's left
-
-# now we can calculate regionwise means and standard errors with beta-regression null-models
-# note that beta-models cannot handle observations that are exactly 0 or 1
-res.natopen.ANO2$RR1[res.natopen.ANO2$RR1==1] <- 0.999
-res.natopen.ANO2$RR1[res.natopen.ANO2$RR1==0] <- 0.001
-res.natopen.GRUK2$Nitrogen2[res.natopen.GRUK2$Nitrogen2==1] <- 0.999
-res.natopen.GRUK2$Nitrogen2[res.natopen.GRUK2$Nitrogen2==0] <- 0.001
-
-regnor <- regnor %>%
-  mutate(
-    RR1.ANO.reg.mean = c(indmean.beta(df=res.natopen.ANO2[res.natopen.ANO2$region=="Northern Norway",c("RR1","ano_flate_id")])[1],
-                         indmean.beta(df=res.natopen.ANO2[res.natopen.ANO2$region=="Central Norway",c("RR1","ano_flate_id")])[1],
-                         indmean.beta(df=res.natopen.ANO2[res.natopen.ANO2$region=="Eastern Norway",c("RR1","ano_flate_id")])[1],
-                         indmean.beta(df=res.natopen.ANO2[res.natopen.ANO2$region=="Western Norway",c("RR1","ano_flate_id")])[1],
-                         indmean.beta(df=res.natopen.ANO2[res.natopen.ANO2$region=="Southern Norway",c("RR1","ano_flate_id")])[1]
-    ),
-    RR1.ANO.reg.se = c(indmean.beta(df=res.natopen.ANO2[res.natopen.ANO2$region=="Northern Norway",c("RR1","ano_flate_id")])[2]*2,
-                       indmean.beta(df=res.natopen.ANO2[res.natopen.ANO2$region=="Central Norway",c("RR1","ano_flate_id")])[2]*2,
-                       indmean.beta(df=res.natopen.ANO2[res.natopen.ANO2$region=="Eastern Norway",c("RR1","ano_flate_id")])[2]*2,
-                       indmean.beta(df=res.natopen.ANO2[res.natopen.ANO2$region=="Western Norway",c("RR1","ano_flate_id")])[2]*2,
-                       indmean.beta(df=res.natopen.ANO2[res.natopen.ANO2$region=="Southern Norway",c("RR1","ano_flate_id")])[2]*2
-    ),
-    RR1.ANO.reg.n = c(nrow(res.natopen.ANO2[res.natopen.ANO2$region=="Northern Norway" & !is.na(res.natopen.ANO2$RR1),]),
-                      nrow(res.natopen.ANO2[res.natopen.ANO2$region=="Central Norway" & !is.na(res.natopen.ANO2$RR1),]),
-                      nrow(res.natopen.ANO2[res.natopen.ANO2$region=="Eastern Norway" & !is.na(res.natopen.ANO2$RR1),]),
-                      nrow(res.natopen.ANO2[res.natopen.ANO2$region=="Western Norway" & !is.na(res.natopen.ANO2$RR1),]),
-                      nrow(res.natopen.ANO2[res.natopen.ANO2$region=="Southern Norway" & !is.na(res.natopen.ANO2$RR1),])
-    ),
-    Nitrogen2.GRUK.reg.mean = c(indmean.beta(df=res.natopen.GRUK2[res.natopen.GRUK2$region=="Northern Norway",c("Nitrogen2","Flate_ID")])[1],
-                                indmean.beta(df=res.natopen.GRUK2[res.natopen.GRUK2$region=="Central Norway",c("Nitrogen2","Flate_ID")])[1],
-                                indmean.beta(df=res.natopen.GRUK2[res.natopen.GRUK2$region=="Eastern Norway",c("Nitrogen2","Flate_ID")])[1],
-                                indmean.beta(df=res.natopen.GRUK2[res.natopen.GRUK2$region=="Western Norway",c("Nitrogen2","Flate_ID")])[1],
-                                indmean.beta(df=res.natopen.GRUK2[res.natopen.GRUK2$region=="Southern Norway",c("Nitrogen2","Flate_ID")])[1]
-    ),
-    Nitrogen2.GRUK.reg.se = c(indmean.beta(df=res.natopen.GRUK2[res.natopen.GRUK2$region=="Northern Norway",c("Nitrogen2","Flate_ID")])[2]*2,
-                              indmean.beta(df=res.natopen.GRUK2[res.natopen.GRUK2$region=="Central Norway",c("Nitrogen2","Flate_ID")])[2]*2,
-                              indmean.beta(df=res.natopen.GRUK2[res.natopen.GRUK2$region=="Eastern Norway",c("Nitrogen2","Flate_ID")])[2]*2,
-                              indmean.beta(df=res.natopen.GRUK2[res.natopen.GRUK2$region=="Western Norway",c("Nitrogen2","Flate_ID")])[2]*2,
-                              indmean.beta(df=res.natopen.GRUK2[res.natopen.GRUK2$region=="Southern Norway",c("Nitrogen2","Flate_ID")])[2]*2
-    ),
-    Nitrogen2.GRUK.reg.n = c(0,
-                             0,
-                             nrow(res.natopen.GRUK2[res.natopen.GRUK2$region=="Eastern Norway" & !is.na(res.natopen.GRUK2$Nitrogen2),]),
-                             0,
-                             nrow(res.natopen.GRUK2[res.natopen.GRUK2$region=="Southern Norway" & !is.na(res.natopen.GRUK2$Nitrogen2),])
-    )
-  )
-
-
-## scaled value maps for CSR-R1 (lower indicator), ANO
-# mean
-tm_shape(regnor) +
-  tm_polygons(col="RR1.ANO.reg.mean", title="CSR-R (lower), mean", style="quantile", palette=rev(get_brewer_pal(palette="OrRd", n=5, plot=FALSE))) +
-  tm_text("RR1.ANO.reg.n",col="black",bg.color="grey")
-```
-Mean index value by region for the lower CSR-R indicator (i.e. index shows deviations towards less ruderal species) from the ANO monitoring data. Numbers in grey fields show the number of observations in the respective region.
-
-```{r}
-# se
-tm_shape(regnor) +
-  tm_polygons(col="RR1.ANO.reg.se", title="CSR-R (lower)", style="quantile", palette=(get_brewer_pal(palette="OrRd", n=5, plot=FALSE))) +
-  tm_text("RR1.ANO.reg.n",col="black",bg.color="grey")
-
-```
-Standard error to the mean index value by region for the lower CSR-R indicator from the ANO monitoring data. Numbers in grey fields show the number of observations in the respective region.
-
-And here are the corresponding maps for the upper Nitrogen indicator in the GRUK data:
-```{r}
-## scaled value maps for Nitrogen2 (upper indicator), ASO
-# mean
-tm_shape(regnor) +
-  tm_polygons(col="Nitrogen2.GRUK.reg.mean", title="Nitrogen (upper), mean", style="quantile", palette=rev(get_brewer_pal(palette="OrRd", n=5, plot=FALSE))) +
-  tm_text("Nitrogen2.GRUK.reg.n",col="black",bg.color="grey")
-```
-Mean index value by region for the upper Nitrogen indicator (i.e. index shows deviations towards increased Nitrogen affinity in the plant community) from the GRUK monitoring data. Numbers in grey fields show the number of observations in the respective region.
-
-```{r}
-# se
-tm_shape(regnor) +
-  tm_polygons(col="Nitrogen2.GRUK.reg.se", title="Nitrogen (upper), 2 SE", style="quantile", palette=(get_brewer_pal(palette="OrRd", n=5, plot=FALSE))) +
-  tm_text("Nitrogen2.GRUK.reg.n",col="black",bg.color="grey")
-
-```
-Standard error to the mean index value by region for the upper Nitrogen indicator from the GRUK monitoring data. Numbers in grey fields show the number of observations in the respective region.
-
-#### continue here ####
-
-#### Unscaled values vs. reference
-We can also compare the unscaled values to the reference distribution in order to identify ecosystem types and functional plant indicators showing a deviation from the expectation. Since CSR-R for ANO and nitrogen for GRUK show some deviations, we exemplify this with these indicators for unscaled values.
-
-CSR-R, ANO:
-```{r}
-#summary(res.natopen.ANO[!is.na(res.natopen.ANO$original),]$kartleggingsenhet_1m2)
-#sort(unique(res.natopen.ANO$kartleggingsenhet_1m2))
-# 8 NiN-types with data to plot
-
-par(mfrow=c(2,4))
-for ( i in sort(unique(res.natopen.ANO$kartleggingsenhet_1m2))[c(1,6,7,10,12,13,14,15)] ) {
-  
-  tryCatch({
-    
-    plot(density( as.matrix(natopen.ref.cov[['RR']][,i]) ,na.rm=T),
-         xlim=c(0,1), ylim=c(0,10), type="l", main=i,xlab='CSR-R value')
-    points(res.natopen.ANO[res.natopen.ANO$fp_ind=="RR1" & res.natopen.ANO$kartleggingsenhet_1m2==i,]$original,
-           rep(0,length(res.natopen.ANO[res.natopen.ANO$fp_ind=="RR1" & res.natopen.ANO$kartleggingsenhet_1m2==i,]$original)),
-           col="red")
-    points(density(res.natopen.ANO[res.natopen.ANO$fp_ind=="RR1" & res.natopen.ANO$kartleggingsenhet_1m2==i,]$original,na.rm=T),
-           type="l", col="red")
-
-    
-  }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
-  
-}
-legend("topright", legend=c("reference","field data"), pch=c(NULL,1), lty=1, col=c("black","red"),bty="n", cex=1)
-
-
-```
-
-Nitrogen, GRUK
-```{r}
-
-# only two NiN types in GRUK, T2-C-7 and T2-C-8
-par(mfrow=c(1,2))
-for ( i in unique(res.natopen.GRUK$Kartleggingsenhet) ) {
-  
-  tryCatch({
-    
-    plot(density( as.matrix(natopen.ref.cov[['Nitrogen']][,i]) ,na.rm=T),
-         xlim=c(1,9), ylim=c(0,2), type="l", main=i,xlab='Nitrogen value')
-    points(res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Nitrogen1" & res.natopen.GRUK$Kartleggingsenhet==i,]$original,
-           rep(0,length(res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Nitrogen1" & res.natopen.GRUK$Kartleggingsenhet==i,]$original)),
-           col="red")
-    points(density(res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Nitrogen1" & res.natopen.GRUK$Kartleggingsenhet==i,]$original,na.rm=T),
-           type="l", col="red")
-
-    
-  }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
-  
-}
-legend("topright", legend=c("reference","field data"), pch=c(NA,1), lty=1, col=c("black","red"), cex=1)
-
-```
-The GRUK figure shows that the distributions for the plant communities' nitrogen affinity in the limestone rich T2-areas (åpen grunnlendt mark) around Oslofjord are shifted towards higher nitrogen affinity. The ANO figure shows shifts towards less ruderal strategy in plant communities limestone poor T2-areas as well as T12 (strandeng) and T16 (rasmarkhei, -eng) types.
