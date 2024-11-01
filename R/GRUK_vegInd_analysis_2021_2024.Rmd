@@ -312,7 +312,7 @@ summary(GRUK.variables)
 
 ## merge information on condition and quality from GRUK.polygoner into GRUK.variables
 # transform GRUK.variables into spatial object
-#GRUK.variables <- st_as_sf(GRUK.variables, coords = c("UTM33_E","UTM33_N"),remove=F, crs = 25833)
+GRUK.variables <- st_as_sf(GRUK.variables, coords = c("UTM33_E","UTM33_N"),remove=F, crs = 25833)
 
 # transform GRUK.polygoner into spatial object
 GRUK.polygoner <- st_as_sf(GRUK.polygoner, wkt = "WKT" ,remove=F, crs = 25833)
@@ -1241,12 +1241,12 @@ tm_shape(regnor) +
   tm_borders() +
   tm_graticules() +
   tm_shape(res.natopen.GRUK2) +
-  tm_dots('Light2',midpoint=NA, palette=tmaptools::get_brewer_pal("YlOrRd", 7, plot = FALSE), scale=2, legend.show = FALSE) + # 
+  tm_dots('Light2',midpoint=NA, palette=tmaptools::get_brewer_pal("RdYlGn", 7, plot = FALSE), scale=2, legend.show = FALSE) + # 
   tm_layout(main.title = "Light index (upper), natopen GRUK",legend.position = c("right", "bottom"), main.title.size=1.2) + 
   tm_add_legend(type = "fill", 
-                col = c(tmaptools::get_brewer_pal("YlOrRd", 7, plot = FALSE),'grey'),
+                col = c(tmaptools::get_brewer_pal("RdYlGn", 7, plot = FALSE),'grey'),
                 labels = c("0.3 - 0.4", "0.4 - 0.5", "0.5 - 0.6", "0.6 - 0.7", 
-                           "0.7 - 0.8", "0.8 - 0.9", "0.9 - 1.0", "NA"),
+                           "0.7 - 0.8", "0.8 - 0.9", "0.9 - 1.0", ">1"),
                 title = "index values")
 
 
