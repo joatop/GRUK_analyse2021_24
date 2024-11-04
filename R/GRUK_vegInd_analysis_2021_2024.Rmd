@@ -1189,21 +1189,45 @@ The ANO results show a high frequency of too low CSR-R values (CSR-R1) and Soil 
 Increased nitrogen may be an effect of alien species, which the GRUK data records as a major pressure and problem for many monitoring sites.
 
 ```{r}
-ggplot(res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Light2",], aes(x=Totaldekning_fremmedearter, y=scaled_value)) +
-  geom_point() +
-  xlab("Alien species cover (%)") + ylab("Scaled Light2 value (GRUK data)")
 
-ggplot(res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Light2",], aes(x=Dekning_problemarter, y=scaled_value)) +
-  geom_point() +
-  xlab("Problem species cover (%)") + ylab("Scaled Light2 value (GRUK data)")
+x <- c("erosjon_prosent","Dekning_busker_busksjikt","Dekning_tresjikt","Dekning_problemarter" ,"Totaldekning_fremmedearter")
+y1 <- c("CC1","CC2","SS1","SS2","RR1","RR2")
+y2 <- c("Light1","Light2","Nitrogen1","Nitrogen2","Soil_disturbance1","Soil_disturbance2")
 
-ggplot(res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Light2",], aes(x=Dekning_busker_busksjikt, y=scaled_value)) +
-  geom_point() +
-  xlab("Shrub species cover (%)") + ylab("Scaled Light2 value (GRUK data)")
 
-ggplot(res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Light2",], aes(x=Dekning_tresjikt, y=scaled_value)) +
-  geom_point() +
-  xlab("Tree species cover (%)") + ylab("Scaled Light2 value (GRUK data)")
+par(mfrow=c(5,6))
+for (i in x) {
+  for (j in y1) {
+    df <- res.natopen.GRUK[res.natopen.GRUK$fp_ind==j,c(i,'scaled_value')]
+    names(df) <- c("xx","yy")
+    df$xx <- as.numeric(df$xx)
+    df$yy <- as.numeric(df$yy)
+    df[!is.na(df$yy) & df$yy==1,"yy"] <- 0.9999
+    df[!is.na(df$yy) & df$yy==0,"yy"] <- 0.0001
+    with(df, plot(xx,yy,xlab=i,ylab=j, xlim=c(0,115), ylim=c(0,1)) )
+    mod <- with(df, betareg(yy~xx))
+    points(0:100,predict(mod,newdata=data.frame(xx=0:100),type='response'),col="red",type="l")
+    text(110,0.1,labels=paste(round(summary(mod)$coefficients$mean[2,4],digits=3)), col="red")
+  }
+}
+
+par(mfrow=c(5,6))
+for (i in x) {
+  for (j in y2) {
+    df <- res.natopen.GRUK[res.natopen.GRUK$fp_ind==j,c(i,'scaled_value')]
+    names(df) <- c("xx","yy")
+    df$xx <- as.numeric(df$xx)
+    df$yy <- as.numeric(df$yy)
+    df[!is.na(df$yy) & df$yy==1,"yy"] <- 0.9999
+    df[!is.na(df$yy) & df$yy==0,"yy"] <- 0.0001
+    with(df, plot(xx,yy,xlab=i,ylab=j, xlim=c(0,115), ylim=c(0,1)) )
+    mod <- with(df, betareg(yy~xx))
+    points(0:100,predict(mod,newdata=data.frame(xx=0:100),type='response'),col="red",type="l")
+    text(110,0.1,labels=paste(round(summary(mod)$coefficients$mean[2,4],digits=3)), col="red")
+  }
+}
+
+
 ```
 And indeed, we can see that very high alien species cover predicts almost only poor scores in the Nitrogen2 indicator.
 
@@ -1264,12 +1288,12 @@ tm_shape(regnor, bbox=boks) +
   tm_graticules() +
   tm_shape(res.natopen.GRUK2) +
   tm_dots('Light2',midpoint=NA, palette=tmaptools::get_brewer_pal("RdYlGn", 7, plot = FALSE), scale=3, legend.show = FALSE) + # 
-  tm_layout(main.title = "Light index (upper), natopen GRUK",legend.position = c("right", "bottom"), main.title.size=1.2) + 
-  tm_add_legend(type = "fill", 
-                col = c(tmaptools::get_brewer_pal("RdYlGn", 7, plot = FALSE),'grey'),
-                labels = c("0.3 - 0.4", "0.4 - 0.5", "0.5 - 0.6", "0.6 - 0.7", 
-                           "0.7 - 0.8", "0.8 - 0.9", "0.9 - 1.0", ">1"),
-                title = "index values")
+  tm_layout(main.title = "Light index (upper), natopen GRUK",legend.position = c("right", "bottom"), main.title.size=1.2)# + 
+#  tm_add_legend(type = "fill", 
+#                col = c(tmaptools::get_brewer_pal("RdYlGn", 7, plot = FALSE),'grey'),
+#                labels = c("0.3 - 0.4", "0.4 - 0.5", "0.5 - 0.6", "0.6 - 0.7", 
+#                           "0.7 - 0.8", "0.8 - 0.9", "0.9 - 1.0", ">1"),
+#                title = "index values")
 
 tm_shape(regnor, bbox=boks.Oslo) +
   tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
