@@ -57,3 +57,37 @@ tm_shape(regnor, bbox=boks.south) +
                 title = "index values")
 
 #YlOrRd
+
+
+tm_shape(regnor, bbox=boks) +
+  tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
+  tm_borders() +
+  tm_graticules() +
+  tm_shape(res.natopen.GRUK2) +
+  tm_dots('Tilstand',palette=tmaptools::get_brewer_pal("RdYlGn", 3, plot = FALSE), scale=4, legend.show = TRUE) +  
+  tm_layout(main.title = "Tilstand, GRUK lokaliteter Oslo",legend.position = c("right", "bottom"), main.title.size=1.2)
+
+
+tm_shape(regnor, bbox=boks.Oslo) +
+  tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
+  tm_borders() +
+  tm_graticules() +
+  tm_shape(res.natopen.GRUK2) +
+  tm_dots('Tilstand',palette=tmaptools::get_brewer_pal("RdYlGn", 3, plot = FALSE), scale=4, legend.show = TRUE) +  
+  tm_layout(main.title = "Tilstand, GRUK lokaliteter Oslo",legend.position = c("right", "bottom"), main.title.size=1.2)
+
+tm_shape(regnor, bbox=boks.mid) +
+  tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
+  tm_borders() +
+  tm_graticules() +
+  tm_shape(res.natopen.GRUK2) +
+  tm_dots('Tilstand',palette=tmaptools::get_brewer_pal("RdYlGn", 3, plot = FALSE), scale=4, legend.show = TRUE) +  
+  tm_layout(main.title = "Tilstand, GRUK lokaliteter Oslofjord",legend.position = c("right", "bottom"), main.title.size=1.2)
+
+tm_shape(regnor, bbox=boks.south) +
+  tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
+  tm_borders() +
+  tm_graticules() +
+  tm_shape(res.natopen.GRUK2) +
+  tm_dots('Tilstand',palette=tmaptools::get_brewer_pal("RdYlGn", 3, plot = FALSE), scale=4, legend.show = TRUE) +  
+  tm_layout(main.title = "Tilstand, GRUK lokaliteter Bamble",legend.position = c("right", "bottom"), main.title.size=1.2)

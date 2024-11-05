@@ -1240,12 +1240,12 @@ res.natopen.GRUK2 <- results.natopen.GRUK[['2-sided']]
 res.natopen.GRUK2 <- st_as_sf(res.natopen.GRUK2, coords = c("UTM33_E","UTM33_N"), remove=F, crs = 25833)
 
 ## Import Norway map
-nor <- st_read("data/mapdata/Norway outline/outlineOfNorway_EPSG25833.shp") #%>%
+nor <- st_read(paste0(here::here(),"/data/mapdata/Norway outline/outlineOfNorway_EPSG25833.shp")) #%>%
 #  st_as_sf() %>%
 #  st_transform(crs = st_crs(myr))
 
 ## Import region map
-reg <- st_read("data/mapdata/Norway outline/regions.shp") #%>%
+reg <- st_read(paste0(here::here(),"/data/mapdata/Norway outline/regions.shp")) #%>%
 #  st_as_sf() %>%
 #  st_transform(crs = st_crs(ANO.geo))
 
@@ -1255,9 +1255,65 @@ reg$region <- c("Northern Norway","Central Norway","Eastern Norway","Western Nor
 
 regnor <- st_intersection(reg,nor)
 
+# Bounding boxes for GRUK area
+boks <- st_bbox(c(xmin = 194100, xmax = 263300, ymax = 6649700, ymin = 6549000), crs = st_crs(25833))
 
+boks.Oslo <- st_bbox(c(xmin = 247100, xmax = 263300, ymax = 6649700, ymin = 6628000), crs = st_crs(25833))
+boks.mid <- st_bbox(c(xmin = 234000, xmax = 257300, ymax = 6621000, ymin = 6590000), crs = st_crs(25833))
+boks.south <- st_bbox(c(xmin = 194100, xmax = 204800, ymax = 6568700, ymin = 6545000), crs = st_crs(25833))
+
+# fixing some variable types
+res.natopen.GRUK2$Lokalitetskvalitet <- as.factor(res.natopen.GRUK2$Lokalitetskvalitet)
+res.natopen.GRUK2$Tilstand <- as.factor(res.natopen.GRUK2$Tilstand)
+res.natopen.GRUK2$Naturmangfold <- as.factor(res.natopen.GRUK2$Naturmangfold)
+
+res.natopen.GRUK2$Lokalitetskvalitet <- factor(res.natopen.GRUK2$Lokalitetskvalitet,levels=c("Lav kvalitet","Moderat kvalitet","Høy kvalitet","Svært høy kvalitet"))
+res.natopen.GRUK2$Tilstand <- factor(res.natopen.GRUK2$Tilstand, levels=c("Dårlig","Moderat","God"))
+res.natopen.GRUK2$Naturmangfold <- factor(res.natopen.GRUK2$Naturmangfold,levels=c("Lite","Moderat","Stort"))
+
+```
+
+
+## condition evaluation, maps
+```{r}
+tm_shape(regnor, bbox=boks) +
+  tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
+  tm_borders() +
+  tm_graticules() +
+  tm_shape(res.natopen.GRUK2) +
+  tm_dots('Tilstand',palette=tmaptools::get_brewer_pal("RdYlGn", 3, plot = FALSE), scale=4, legend.show = TRUE) +  
+  tm_layout(main.title = "Tilstand, GRUK lokaliteter",legend.position = c("right", "bottom"), main.title.size=1.2)
+
+
+tm_shape(regnor, bbox=boks.Oslo) +
+  tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
+  tm_borders() +
+  tm_graticules() +
+  tm_shape(res.natopen.GRUK2) +
+  tm_dots('Tilstand',palette=tmaptools::get_brewer_pal("RdYlGn", 3, plot = FALSE), scale=4, legend.show = TRUE) +  
+  tm_layout(main.title = "Tilstand, GRUK lokaliteter Oslo",legend.position = c("right", "bottom"), main.title.size=1.2)
+
+tm_shape(regnor, bbox=boks.mid) +
+  tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
+  tm_borders() +
+  tm_graticules() +
+  tm_shape(res.natopen.GRUK2) +
+  tm_dots('Tilstand',palette=tmaptools::get_brewer_pal("RdYlGn", 3, plot = FALSE), scale=4, legend.show = TRUE) +  
+  tm_layout(main.title = "Tilstand, GRUK lokaliteter Oslofjord",legend.position = c("right", "bottom"), main.title.size=1.2)
+
+tm_shape(regnor, bbox=boks.south) +
+  tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
+  tm_borders() +
+  tm_graticules() +
+  tm_shape(res.natopen.GRUK2) +
+  tm_dots('Tilstand',palette=tmaptools::get_brewer_pal("RdYlGn", 3, plot = FALSE), scale=4, legend.show = TRUE) +  
+  tm_layout(main.title = "Tilstand, GRUK lokaliteter Langesundsfjorden",legend.position = c("right", "bottom"), main.title.size=1.2)
+
+
+```
 
 ## scaled value maps
+```{r}
 
 # GRUK, Light2 (upper indicator)
 tm_shape(regnor) +
