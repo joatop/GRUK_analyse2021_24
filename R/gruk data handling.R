@@ -91,3 +91,15 @@ tm_shape(regnor, bbox=boks.south) +
   tm_shape(res.natopen.GRUK2) +
   tm_dots('Tilstand',palette=tmaptools::get_brewer_pal("RdYlGn", 3, plot = FALSE), scale=4, legend.show = TRUE) +  
   tm_layout(main.title = "Tilstand, GRUK lokaliteter Bamble",legend.position = c("right", "bottom"), main.title.size=1.2)
+
+
+summary(GRUK.polygoner)
+GRUK.polygoner <- GRUK.polygoner %>%
+  mutate(Tilstand = factor(Tilstand, levels=c("Svært redusert","Dårlig","Moderat","God"))) %>%
+  mutate(Naturmangfold = factor(Naturmangfold, levels=c("0","Lite","Moderat","Stort"))) %>%
+  mutate(Lokalitetskvalitet = factor(Lokalitetskvalitet, levels=c("Lav kvalitet","Moderat kvalitet","Høy kvalitet","Svært høy kvalitet","Ikke kvalitetsvurdert")))
+summary(GRUK.polygoner[,c("Lokalitetskvalitet","Naturmangfold","Tilstand")])[,1:3]
+
+res.natopen.GRUK2$Lokalitetskvalitet <- as.factor(res.natopen.GRUK2$Lokalitetskvalitet)
+res.natopen.GRUK2$Tilstand <- as.factor(res.natopen.GRUK2$Tilstand)
+res.natopen.GRUK2$Naturmangfold <- as.factor(res.natopen.GRUK2$Naturmangfold)
