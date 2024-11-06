@@ -1126,7 +1126,7 @@ head(results.natopen.GRUK[['2-sided']])
 In order to visualize the results we need to rearrange the results-objects from wide to long format (note that there is both a lower and an upper condition indicator for each of the functional plant indicators).
 
 ```{r, message = FALSE}
-#### plotting scaled values by main ecosystem type ####
+#### scaled values by main ecosystem type ####
 ## continuing with 2-sided
 res.natopen.GRUK <- results.natopen.GRUK[['2-sided']]
 
@@ -1165,10 +1165,10 @@ res.natopen.GRUK <-
 ```
 
 ### Ecosystem sub-types
-And we can show the resulting scaled values as Violin plots for each indicator and main ecosystem type 
+We can show the resulting scaled values as Violin plots for each indicator and main ecosystem type 
 ```{r,echo=FALSE,message=FALSE, warning=FALSE}
 
-# making the plot, GRUK
+# plotting scaled values by ecosystem type
 ggplot(res.natopen.GRUK, aes(x=factor(Kartleggingsenhet_1til5000), y=scaled_value, fill=fp_ind)) + 
   geom_hline(yintercept=0.6, linetype="dashed") + 
   geom_violin(color = NA) +
@@ -1262,7 +1262,7 @@ boks.Oslo <- st_bbox(c(xmin = 247100, xmax = 263300, ymax = 6649700, ymin = 6628
 boks.mid <- st_bbox(c(xmin = 234000, xmax = 257300, ymax = 6621000, ymin = 6590000), crs = st_crs(25833))
 boks.south <- st_bbox(c(xmin = 194100, xmax = 204800, ymax = 6568700, ymin = 6545000), crs = st_crs(25833))
 
-# fixing some variable types
+# fixing some variable types - results
 res.natopen.GRUK2$Lokalitetskvalitet <- as.factor(res.natopen.GRUK2$Lokalitetskvalitet)
 res.natopen.GRUK2$Tilstand <- as.factor(res.natopen.GRUK2$Tilstand)
 res.natopen.GRUK2$Naturmangfold <- as.factor(res.natopen.GRUK2$Naturmangfold)
@@ -1270,6 +1270,15 @@ res.natopen.GRUK2$Naturmangfold <- as.factor(res.natopen.GRUK2$Naturmangfold)
 res.natopen.GRUK2$Lokalitetskvalitet <- factor(res.natopen.GRUK2$Lokalitetskvalitet,levels=c("Lav kvalitet","Moderat kvalitet","Høy kvalitet","Svært høy kvalitet"))
 res.natopen.GRUK2$Tilstand <- factor(res.natopen.GRUK2$Tilstand, levels=c("Dårlig","Moderat","God"))
 res.natopen.GRUK2$Naturmangfold <- factor(res.natopen.GRUK2$Naturmangfold,levels=c("Lite","Moderat","Stort"))
+
+# fixing some variable types - polygon data
+#summary(GRUK.polygoner)
+GRUK.polygoner2 <- GRUK.polygoner %>%
+  mutate(Tilstand = factor(Tilstand, levels=c("Svært redusert","Dårlig","Moderat","God"))) %>%
+  mutate(Naturmangfold = factor(Naturmangfold, levels=c("0","Lite","Moderat","Stort"))) %>%
+  mutate(Lokalitetskvalitet = factor(Lokalitetskvalitet, levels=c("Lav kvalitet","Moderat kvalitet","Høy kvalitet","Svært høy kvalitet","Ikke kvalitetsvurdert"))) %>%
+  filter(!is.na(Tilstand))
+summary(GRUK.polygoner2[,c("Lokalitetskvalitet","Naturmangfold","Tilstand")])[,1:3]
 
 ```
 
@@ -1280,7 +1289,7 @@ tm_shape(regnor, bbox=boks) +
   tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
   tm_borders() +
   tm_graticules() +
-  tm_shape(res.natopen.GRUK2) +
+  tm_shape(GRUK.polygoner2) +
   tm_dots('Tilstand',palette=tmaptools::get_brewer_pal("RdYlGn", 3, plot = FALSE), scale=4, legend.show = TRUE) +  
   tm_layout(main.title = "Tilstand, GRUK lokaliteter",legend.position = c("right", "bottom"), main.title.size=1.2)
 
@@ -1289,25 +1298,25 @@ tm_shape(regnor, bbox=boks.Oslo) +
   tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
   tm_borders() +
   tm_graticules() +
-  tm_shape(res.natopen.GRUK2) +
+  tm_shape(GRUK.polygoner2) +
   tm_dots('Tilstand',palette=tmaptools::get_brewer_pal("RdYlGn", 3, plot = FALSE), scale=4, legend.show = TRUE) +  
-  tm_layout(main.title = "Tilstand, GRUK lokaliteter Oslo",legend.position = c("right", "bottom"), main.title.size=1.2)
+  tm_layout(main.title = "Tilstand, GRUK lokaliteter Indre Oslofjord",legend.position = c("right", "bottom"), main.title.size=1.2)
 
 tm_shape(regnor, bbox=boks.mid) +
   tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
   tm_borders() +
   tm_graticules() +
-  tm_shape(res.natopen.GRUK2) +
+  tm_shape(GRUK.polygoner2) +
   tm_dots('Tilstand',palette=tmaptools::get_brewer_pal("RdYlGn", 3, plot = FALSE), scale=4, legend.show = TRUE) +  
-  tm_layout(main.title = "Tilstand, GRUK lokaliteter Oslofjord",legend.position = c("right", "bottom"), main.title.size=1.2)
+  tm_layout(main.title = "Tilstand, GRUK lokaliteter Midtre Oslofjord",legend.position = c("right", "bottom"), main.title.size=1.2)
 
 tm_shape(regnor, bbox=boks.south) +
   tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
   tm_borders() +
   tm_graticules() +
-  tm_shape(res.natopen.GRUK2) +
+  tm_shape(GRUK.polygoner2) +
   tm_dots('Tilstand',palette=tmaptools::get_brewer_pal("RdYlGn", 3, plot = FALSE), scale=4, legend.show = TRUE) +  
-  tm_layout(main.title = "Tilstand, GRUK lokaliteter Langesundsfjorden",legend.position = c("right", "bottom"), main.title.size=1.2)
+  tm_layout(main.title = "Tilstand, GRUK lokaliteter Ytre Oslofjord",legend.position = c("right", "bottom"), main.title.size=1.2)
 
 
 ```
