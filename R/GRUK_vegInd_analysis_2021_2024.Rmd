@@ -1162,6 +1162,11 @@ res.natopen.GRUK <-
                                    pull(original)
   )
 
+summary(res.natopen.GRUK)
+res.natopen.GRUK <- res.natopen.GRUK %>%
+  mutate(Dekning_problemarter = as.numeric(Dekning_problemarter))
+summary(res.natopen.GRUK)
+
 ```
 
 ### Ecosystem sub-types
@@ -1229,7 +1234,67 @@ for (i in x) {
 
 
 ```
-And indeed, we can see that very high alien species cover predicts almost only poor scores in the Nitrogen2 indicator.
+From this overview we focus on negative trends (i.e. condition variables increase towards worse and condition indicators decrease towards worse).
+  - too low light (Light1) may be a function of high tree cover.
+  - too high light (Light2) may be a function of high erosion.
+  - too high nitrogen (nitrogen2) may be a function of high alien cover.
+  - too low disturbance (Soil_disturbance1) may be a function of high tree cover.
+  - too high disturbance (Soil_disturbance2) may be a function of high problem species cover.
+  - too high competition strategy (CC2), may be a function of both high cover of alien and problem species
+
+```{r}
+res.natopen.GRUK <- res.natopen.GRUK %>%
+  mutate(scaled_value2 = ifelse(scaled_value < 0.001, 0.001, scaled_value) ) %>%
+  mutate(scaled_value2 = ifelse(scaled_value2 > 0.999, 0.999, scaled_value2) )
+
+
+summary( glmmTMB(scaled_value2 ~ Dekning_tresjikt +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Light1",]) )
+
+summary( glmmTMB(scaled_value2 ~ erosjon_prosent +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Light2",]) )
+
+summary( glmmTMB(scaled_value2 ~ Totaldekning_fremmedearter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Nitrogen2",]) )
+
+summary( glmmTMB(scaled_value2 ~ Dekning_tresjikt +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Soil_disturbance1",]) )
+
+summary( glmmTMB(scaled_value2 ~ Dekning_problemarter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Soil_disturbance2",]) )
+
+summary( glmmTMB(scaled_value2 ~ Totaldekning_fremmedearter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="CC2",]) )
+
+summary( glmmTMB(scaled_value2 ~ Dekning_problemarter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="CC2",]) )
+
+
+```
+
+Plotting relevant scatterplots and models
+```{r}
+p_L1_tre <- res.natopen.GRUK %>%
+  filter(fp_ind=="Light1") %>%
+  ggplot(aes(x=Dekning_tresjikt, y=scaled_value)) +
+  geom_point() +
+  labs(y = "Light1 (Light index towards lower limit value)", x = "Tree cover")
+
+mod <- glmmTMB(scaled_value2 ~ Dekning_tresjikt +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Light1",])
+pred <- data.frame(
+  mu = predict(mod,newdata=data.frame(Dekning_tresjikt=0:100),type='link',re.form=NA),
+  se = predict(mod,newdata=data.frame(Dekning_tresjikt=0:100),type='link',re.form=NA,se.fit=T)$se.fit
+)
+
+pred <- pred %>%
+  mutate(ci.lo = mu-1.96*se,
+         ci.hi = mu+1.96*se)
+
+expit <- function(L) exp(L) / (1+exp(L))
+
+p_L1_tre +
+  geom_line(data=data.frame(x=0:100,y=expit(pred$mu)), aes(x,y),col="firebrick",size=2) +
+  geom_ribbon(data = pred, aes(x= 0:100, y = mu, ymin = expit(ci.lo), ymax = expit(ci.hi)), alpha = 0.3, fill = "firebrick") + 
+#  annotate("text",x=90, y=0.1, label=paste("p = ",round(summary(mod)$coefficients$cond[2,4],6)), size=6 ) +
+  annotate("text",x=90, y=0.1, label=paste("p < 0.01"), size=6, col="firebrick" )
+
+
+
+```
+
 
 ### Indicator index maps
 We can also show the results as a map, for instance for CSR-R1 (the lower ruderal/disturbance indicator) for ANO and Nitrogen2 (the upper nitrogen indicator) for GRUK, either by directly plotting the data onto the map...
