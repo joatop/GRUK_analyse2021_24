@@ -1276,7 +1276,8 @@ p_L1_tre <- res.natopen.GRUK %>%
   filter(fp_ind=="Light1") %>%
   ggplot(aes(x=Dekning_tresjikt, y=scaled_value)) +
   geom_point() +
-  labs(y = "Light1 (Light index towards lower limit value)", x = "Tree cover (%)")
+  coord_cartesian(xlim = c(0, 100),ylim = c(0, 1)) +
+  labs(y = "Light1", x = "Tree cover (%)") # (Light index towards lower limit value)
 
 # model and model prediction
 mod <- glmmTMB(scaled_value2 ~ Dekning_tresjikt +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Light1",])
@@ -1293,7 +1294,7 @@ expit <- function(L) exp(L) / (1+exp(L))
 
 # add model line and 95%-CI to scatterplot
 p_L1_tre <- p_L1_tre +
-  geom_line(data=data.frame(x=0:100,y=expit(pred$mu)), aes(x,y),col="firebrick",size=2) +
+  geom_line(data=data.frame(x=0:100,y=expit(pred$mu)), aes(x,y),col="firebrick",linewidth=2) +
   geom_ribbon(data = pred, aes(x= 0:100, y = mu, ymin = expit(ci.lo), ymax = expit(ci.hi)), alpha = 0.3, fill = "firebrick") + 
 #  annotate("text",x=90, y=0.1, label=paste("p = ",round(summary(mod)$coefficients$cond[2,4],6)), size=6, col="firebrick" ) +
   annotate("text",x=90, y=0.1, label=paste("p < 0.01"), size=6, col="firebrick" )
@@ -1305,7 +1306,8 @@ p_L2_slit <- res.natopen.GRUK %>%
   filter(fp_ind=="Light2") %>%
   ggplot(aes(x=erosjon_prosent, y=scaled_value)) +
   geom_point() +
-  labs(y = "Light2 (Light index towards upper limit value)", x = "Erosion/Disturbance cover (%)")
+  coord_cartesian(xlim = c(0, 100),ylim = c(0, 1)) +
+  labs(y = "Light2", x = "Erosion/Disturbance cover (%)") # (Light index towards upper limit value)
 
 # model and model prediction
 mod <- glmmTMB(scaled_value2 ~ erosjon_prosent +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Light2",])
@@ -1322,7 +1324,7 @@ expit <- function(L) exp(L) / (1+exp(L))
 
 # add model line and 95%-CI to scatterplot
 p_L2_slit <- p_L2_slit +
-  geom_line(data=data.frame(x=0:100,y=expit(pred$mu)), aes(x,y),col="firebrick",size=2) +
+  geom_line(data=data.frame(x=0:100,y=expit(pred$mu)), aes(x,y),col="firebrick",linewidth=2) +
   geom_ribbon(data = pred, aes(x= 0:100, y = mu, ymin = expit(ci.lo), ymax = expit(ci.hi)), alpha = 0.3, fill = "firebrick") + 
 #  annotate("text",x=90, y=0.1, label=paste("p = ",round(summary(mod)$coefficients$cond[2,4],6)), size=6, col="firebrick" ) +
   annotate("text",x=90, y=0.1, label=paste("p < 0.01"), size=6, col="firebrick" )
@@ -1334,7 +1336,8 @@ p_N2_frem <- res.natopen.GRUK %>%
   filter(fp_ind=="Nitrogen2") %>%
   ggplot(aes(x=Totaldekning_fremmedearter, y=scaled_value)) +
   geom_point() +
-  labs(y = "Nitrogen2 (Nitrogen index towards upper limit value)", x = "Alien plant species cover (%)")
+  coord_cartesian(xlim = c(0, 100),ylim = c(0, 1)) +
+  labs(y = "Nitrogen2", x = "Alien plant species cover (%)") # (Nitrogen index towards upper limit value)
 
 # model and model prediction
 mod <- glmmTMB(scaled_value2 ~ Totaldekning_fremmedearter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Nitrogen2",])
@@ -1351,7 +1354,7 @@ expit <- function(L) exp(L) / (1+exp(L))
 
 # add model line and 95%-CI to scatterplot
 p_N2_frem <- p_N2_frem +
-  geom_line(data=data.frame(x=0:100,y=expit(pred$mu)), aes(x,y),col="firebrick",size=2) +
+  geom_line(data=data.frame(x=0:100,y=expit(pred$mu)), aes(x,y),col="firebrick",linewidth=2) +
   geom_ribbon(data = pred, aes(x= 0:100, y = mu, ymin = expit(ci.lo), ymax = expit(ci.hi)), alpha = 0.3, fill = "firebrick") + 
 #  annotate("text",x=90, y=0.1, label=paste("p = ",round(summary(mod)$coefficients$cond[2,4],6)), size=6, col="firebrick" ) +
   annotate("text",x=90, y=0.1, label=paste("p < 0.01"), size=6, col="firebrick" )
@@ -1363,7 +1366,8 @@ p_Sd1_tre <- res.natopen.GRUK %>%
   filter(fp_ind=="Soil_disturbance1") %>%
   ggplot(aes(x=Dekning_tresjikt, y=scaled_value)) +
   geom_point() +
-  labs(y = "Soil_disturbance1 (Soil disturbance index towards lower limit value)", x = "Tree cover (%)")
+  coord_cartesian(xlim = c(0, 100),ylim = c(0, 1)) +
+  labs(y = "Disturbance1", x = "Tree cover (%)") # (Soil disturbance index towards lower limit value)
 
 # model and model prediction
 mod <- glmmTMB(scaled_value2 ~ Dekning_tresjikt +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Soil_disturbance1",])
@@ -1380,7 +1384,7 @@ expit <- function(L) exp(L) / (1+exp(L))
 
 # add model line and 95%-CI to scatterplot
 p_Sd1_tre <- p_Sd1_tre +
-  geom_line(data=data.frame(x=0:100,y=expit(pred$mu)), aes(x,y),col="firebrick",size=2) +
+  geom_line(data=data.frame(x=0:100,y=expit(pred$mu)), aes(x,y),col="firebrick",linewidth=2) +
   geom_ribbon(data = pred, aes(x= 0:100, y = mu, ymin = expit(ci.lo), ymax = expit(ci.hi)), alpha = 0.3, fill = "firebrick") + 
 #  annotate("text",x=90, y=0.1, label=paste("p = ",round(summary(mod)$coefficients$cond[2,4],6)), size=6, col="firebrick" ) +
   annotate("text",x=90, y=0.1, label=paste("p < 0.01"), size=6, col="firebrick" )
@@ -1392,7 +1396,8 @@ p_Sd2_prob <- res.natopen.GRUK %>%
   filter(fp_ind=="Soil_disturbance2") %>%
   ggplot(aes(x=Dekning_problemarter, y=scaled_value)) +
   geom_point() +
-  labs(y = "Soil_disturbance2 (Soil disturbance index towards upper limit value)", x = "Problem species cover (%)")
+  coord_cartesian(xlim = c(0, 100),ylim = c(0, 1)) +
+  labs(y = "Disturbance2", x = "Problem species cover (%)") # (Soil disturbance index towards upper limit value)
 
 # model and model prediction
 mod <- glmmTMB(scaled_value2 ~ Dekning_problemarter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Soil_disturbance2",])
@@ -1409,7 +1414,7 @@ expit <- function(L) exp(L) / (1+exp(L))
 
 # add model line and 95%-CI to scatterplot
 p_Sd2_prob <- p_Sd2_prob +
-  geom_line(data=data.frame(x=0:100,y=expit(pred$mu)), aes(x,y),col="firebrick",size=2) +
+  geom_line(data=data.frame(x=0:100,y=expit(pred$mu)), aes(x,y),col="firebrick",linewidth=2) +
   geom_ribbon(data = pred, aes(x= 0:100, y = mu, ymin = expit(ci.lo), ymax = expit(ci.hi)), alpha = 0.3, fill = "firebrick") + 
 #  annotate("text",x=90, y=0.1, label=paste("p = ",round(summary(mod)$coefficients$cond[2,4],6)), size=6, col="firebrick" ) +
   annotate("text",x=90, y=0.1, label=paste("p < 0.01"), size=6, col="firebrick" )
@@ -1421,7 +1426,8 @@ p_CC2_prob <- res.natopen.GRUK %>%
   filter(fp_ind=="CC2") %>%
   ggplot(aes(x=Dekning_problemarter, y=scaled_value)) +
   geom_point() +
-  labs(y = "CSR-C2 (Grime's C index towards upper limit value)", x = "Problem species cover (%)")
+  coord_cartesian(xlim = c(0, 100),ylim = c(0, 1)) +
+  labs(y = "CSR-C2", x = "Problem species cover (%)") #  (Grime's C index towards upper limit value)
 
 # model and model prediction
 mod <- glmmTMB(scaled_value2 ~ Dekning_problemarter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="CC2",])
@@ -1438,9 +1444,9 @@ expit <- function(L) exp(L) / (1+exp(L))
 
 # add model line and 95%-CI to scatterplot
 p_CC2_prob <- p_CC2_prob +
-  geom_line(data=data.frame(x=0:100,y=expit(pred$mu)), aes(x,y),col="firebrick",size=2) +
+  geom_line(data=data.frame(x=0:100,y=expit(pred$mu)), aes(x,y),col="firebrick",linewidth=2) +
   geom_ribbon(data = pred, aes(x= 0:100, y = mu, ymin = expit(ci.lo), ymax = expit(ci.hi)), alpha = 0.3, fill = "firebrick") + 
-  annotate("text",x=90, y=0.1, label=paste("p = ",round(summary(mod)$coefficients$cond[2,4],6)), size=6, col="firebrick" ) #+
+  annotate("text",x=90, y=0.1, label=paste("p = ",round(summary(mod)$coefficients$cond[2,4],2)), size=6, col="firebrick" ) #+
 #  annotate("text",x=90, y=0.1, label=paste("p < 0.01"), size=6, col="firebrick" )
 
 
@@ -1450,7 +1456,8 @@ p_CC2_frem <- res.natopen.GRUK %>%
   filter(fp_ind=="CC2") %>%
   ggplot(aes(x=Totaldekning_fremmedearter, y=scaled_value)) +
   geom_point() +
-  labs(y = "CSR-C2 (Grime's C index towards upper limit value)", x = "Alien species cover (%)")
+  coord_cartesian(xlim = c(0, 100),ylim = c(0, 1)) +
+  labs(y = "CSR-C2", x = "Alien species cover (%)") # (Grime's C index towards upper limit value)
 
 # model and model prediction
 mod <- glmmTMB(scaled_value2 ~ Totaldekning_fremmedearter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="CC2",])
@@ -1467,13 +1474,13 @@ expit <- function(L) exp(L) / (1+exp(L))
 
 # add model line and 95%-CI to scatterplot
 p_CC2_frem <- p_CC2_frem +
-  geom_line(data=data.frame(x=0:100,y=expit(pred$mu)), aes(x,y),col="firebrick",size=2) +
+  geom_line(data=data.frame(x=0:100,y=expit(pred$mu)), aes(x,y),col="firebrick",linewidth=2) +
   geom_ribbon(data = pred, aes(x= 0:100, y = mu, ymin = expit(ci.lo), ymax = expit(ci.hi)), alpha = 0.3, fill = "firebrick") + 
-  annotate("text",x=90, y=0.1, label=paste("p = ",round(summary(mod)$coefficients$cond[2,4],6)), size=6, col="firebrick" ) #+
+  annotate("text",x=90, y=0.1, label=paste("p = ",round(summary(mod)$coefficients$cond[2,4],2)), size=6, col="firebrick" ) #+
 #  annotate("text",x=90, y=0.1, label=paste("p < 0.01"), size=6, col="firebrick" )
 
 
-ggarrange(p_L1_tre, p_L2_slit, p_N2_frem, p_Sd1_tre, p_Sd2_prob, p_CC2_prob, p_CC2_frem + rremove("x.text"), 
+ggarrange(p_L1_tre, p_L2_slit, p_Sd1_tre, p_Sd2_prob, p_CC2_prob, p_CC2_frem, p_N2_frem + rremove("x.text"), 
           labels = c("A", "B", "C", "D", "E", "F", "G"),
           ncol = 2, nrow = 4)
 
@@ -1482,7 +1489,7 @@ ggarrange(p_L1_tre, p_L2_slit, p_N2_frem, p_Sd1_tre, p_Sd2_prob, p_CC2_prob, p_C
 ```
 
 
-### Indicator index maps
+### maps
 We can also show the results as a map, for instance for CSR-R1 (the lower ruderal/disturbance indicator) for ANO and Nitrogen2 (the upper nitrogen indicator) for GRUK, either by directly plotting the data onto the map...
 ```{r, echo=FALSE, warning=FALSE,message = FALSE}
 #### scaled value maps ####
@@ -1531,44 +1538,66 @@ GRUK.polygoner2 <- GRUK.polygoner %>%
   filter(!is.na(Tilstand))
 summary(GRUK.polygoner2[,c("Lokalitetskvalitet","Naturmangfold","Tilstand")])[,1:3]
 
+# creating spatial objects for the bounding boxes
+bokses <- data.frame(lon=c(241100,241100,270300,270300,
+                           225000,225000,270300,270300,
+                           184100,184100,214800,214800),
+                     lat=c(6628000,6649700,6649700,6628000,
+                           6590000,6621000,6621000,6590000,
+                           6545000,6568700,6568700,6545000),
+                     omr=c(rep('indre',4),rep('midtre',4),rep('ytre',4))
+)
+
+bokses <- bokses %>%
+  st_as_sf(coords = c("lon", "lat"), remove=F, crs = 25833) %>%
+  group_by(omr) %>%
+  summarise(geometry = st_combine(geometry)) %>%
+  st_cast("POLYGON")
+
 ```
 
 
 ## condition evaluation, maps
 ```{r}
-tm_shape(regnor, bbox=boks) +
+map.all <- tm_shape(regnor, bbox=boks) +
+  tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
+  tm_borders() +
+  tm_graticules() +
+  tm_shape(bokses) +
+  tm_borders(lwd=3) +
+  tm_shape(GRUK.polygoner2) +
+  tm_dots('Tilstand',palette=tmaptools::get_brewer_pal("RdYlGn", 4, plot = FALSE), scale=2, legend.show = FALSE) +
+  tm_add_legend(type = "fill", 
+                col = tmaptools::get_brewer_pal("RdYlGn", 4, plot = FALSE),
+                labels = c("Svært redusert", "Dårlig", "Moderat", "God"),
+                title = "") +  #
+  tm_layout(main.title = "Tilstand GRUK lokaliteter (Mdir instruks)", main.title.size=1.2, legend.position = c("left", "top"), legend.text.size = 1, legend.title.size=1.5)
+
+map.indre <- tm_shape(regnor, bbox=boks.Oslo) +
   tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
   tm_borders() +
   tm_graticules() +
   tm_shape(GRUK.polygoner2) +
-  tm_dots('Tilstand',palette=tmaptools::get_brewer_pal("RdYlGn", 3, plot = FALSE), scale=4, legend.show = TRUE) +  
-  tm_layout(main.title = "Tilstand, GRUK lokaliteter",legend.position = c("right", "bottom"), main.title.size=1.2)
+  tm_dots('Tilstand',palette=tmaptools::get_brewer_pal("RdYlGn", 3, plot = FALSE), scale=4, legend.show = FALSE) +  
+  tm_layout(main.title = "Indre Oslofjord",legend.position = c("right", "bottom"), main.title.size=1.2)
 
-
-tm_shape(regnor, bbox=boks.Oslo) +
+map.midtre <- tm_shape(regnor, bbox=boks.mid) +
   tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
   tm_borders() +
   tm_graticules() +
   tm_shape(GRUK.polygoner2) +
-  tm_dots('Tilstand',palette=tmaptools::get_brewer_pal("RdYlGn", 3, plot = FALSE), scale=4, legend.show = TRUE) +  
-  tm_layout(main.title = "Tilstand, GRUK lokaliteter Indre Oslofjord",legend.position = c("right", "bottom"), main.title.size=1.2)
+  tm_dots('Tilstand',palette=tmaptools::get_brewer_pal("RdYlGn", 3, plot = FALSE), scale=4, legend.show = FALSE) +  
+  tm_layout(main.title = "Midtre Oslofjord",legend.position = c("right", "bottom"), main.title.size=1.2)
 
-tm_shape(regnor, bbox=boks.mid) +
+map.ytre <- tm_shape(regnor, bbox=boks.south) +
   tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
   tm_borders() +
   tm_graticules() +
   tm_shape(GRUK.polygoner2) +
-  tm_dots('Tilstand',palette=tmaptools::get_brewer_pal("RdYlGn", 3, plot = FALSE), scale=4, legend.show = TRUE) +  
-  tm_layout(main.title = "Tilstand, GRUK lokaliteter Midtre Oslofjord",legend.position = c("right", "bottom"), main.title.size=1.2)
+  tm_dots('Tilstand',palette=tmaptools::get_brewer_pal("RdYlGn", 3, plot = FALSE), scale=4, legend.show = FALSE) +  
+  tm_layout(main.title = "Ytre Oslofjord",legend.position = c("right", "bottom"), main.title.size=1.2)
 
-tm_shape(regnor, bbox=boks.south) +
-  tm_fill('GID_0', labels="", title="", legend.show = FALSE) + 
-  tm_borders() +
-  tm_graticules() +
-  tm_shape(GRUK.polygoner2) +
-  tm_dots('Tilstand',palette=tmaptools::get_brewer_pal("RdYlGn", 3, plot = FALSE), scale=4, legend.show = TRUE) +  
-  tm_layout(main.title = "Tilstand, GRUK lokaliteter Ytre Oslofjord",legend.position = c("right", "bottom"), main.title.size=1.2)
-
+tmap_arrange(map.all, map.indre, map.ytre, map.midtre, nrow=2)
 
 ```
 ## biodiversity evaluation, maps
