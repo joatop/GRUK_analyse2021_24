@@ -112,6 +112,19 @@ natopen.ref.cov.val
 natopen.ref.cov.val$grunn <- as.factor(natopen.ref.cov.val$grunn)
 natopen.ref.cov.val$Ind <- as.factor(natopen.ref.cov.val$Ind)
 summary(natopen.ref.cov.val)
+head(natopen.ref.cov.val)
+
+### add scaling values for cover of slitasje, alien sp., problem sp., woody species
+natopen.ref.cov.val <- natopen.ref.cov.val %>% add_row(N1="natopen",
+                                hoved=rep("T2",6),
+                                grunn=rep(c("T2-C-7","T2-C-8"),3),
+                                county=rep("all",6),
+                                region=rep("all",6),
+                                Ind=c("aliens","aliens","erosion","erosion","shrub","shrub"),
+                                Rv=c(100,100,100,100,90,90),
+                                Gv=c(95,95,93.75,93.75,75,75),
+                                maxmin=c(0,0,0,0,25,25)
+                )
 
 
 #### prepare dataframes for scaling ####
@@ -427,12 +440,60 @@ for (i in 1:nrow(GRUK.natopen) ) {  #
         
       }
       
-      
-      
     }
     #    }
     
-    
+       # Area cover without alien species
+      dat <- GRUK.natopen[i,"Totaldekning_fremmedearter"]
+      
+      if ( !is.na(dat) ) {
+        
+        val <- 100-dat
+        # one-sided indicator
+        ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='aliens' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"])),'Rv']
+        lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='aliens' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"])),'Gv']
+        maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='aliens' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
+        # coercing x into results.natopen.GRUK dataframe
+        results.natopen.GRUK[['scaled']][i,'aliens'] <- scal() 
+        results.natopen.GRUK[['non-truncated']][i,'aliens'] <- scal() 
+        results.natopen.GRUK[['original']][i,'aliens'] <- val
+        
+      }    
+      
+      ## run the indicators that are not dependent on species in the plot
+      # Area cover without erosion
+      dat <- GRUK.natopen[i,"erosjon_prosent"]
+      
+      if ( !is.na(dat) ) {
+        
+        val <- 100-dat
+        # one-sided indicator
+        ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='erosion' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"])),'Rv']
+        lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='erosion' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"])),'Gv']
+        maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='erosion' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
+        # coercing x into results.natopen.GRUK dataframe
+        results.natopen.GRUK[['scaled']][i,'erosion'] <- scal() 
+        results.natopen.GRUK[['non-truncated']][i,'erosion'] <- scal() 
+        results.natopen.GRUK[['original']][i,'erosion'] <- val
+        
+      } 
+      
+      # area cover without shrub cover
+      dat <- GRUK.natopen[i,"Dekning_busker_busksjikt"]
+      
+      if ( !is.na(dat) ) {
+        
+        val <- 100-dat
+        # one-sided indicator
+        ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='shrub' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"])),'Rv']
+        lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='shrub' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"])),'Gv']
+        maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='shrub' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
+        # coercing x into results.natopen.GRUK dataframe
+        results.natopen.GRUK[['scaled']][i,'shrub'] <- scal() 
+        results.natopen.GRUK[['non-truncated']][i,'shrub'] <- scal() 
+        results.natopen.GRUK[['original']][i,'shrub'] <- val
+        
+      }
     
   }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
 }

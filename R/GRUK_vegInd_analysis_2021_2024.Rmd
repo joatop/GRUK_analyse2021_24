@@ -656,7 +656,7 @@ for (i in 1:length(x) ) {
   tab[i,10:12] <- quantile(as.matrix(natopen.ref.cov[["Light"]][,x[i]]),probs=c(0.025,0.5,0.975),na.rm=T)
   tab[i,13:15] <- quantile(as.matrix(natopen.ref.cov[["Nitrogen"]][,x[i]]),probs=c(0.025,0.5,0.975),na.rm=T)
   tab[i,16:18] <- quantile(as.matrix(natopen.ref.cov[["Soil_disturbance"]][,x[i]]),probs=c(0.025,0.5,0.975),na.rm=T)
-
+  
 }
 
 tab <- as.data.frame(tab)
@@ -711,38 +711,51 @@ y.Soil_disturbance[((1:dim(tab)[1])*2)] <- tab$Soil_disturbance_q97.5
 
 # ref object for indicators
 natopen.ref.cov.val <- data.frame(N1=rep('natopen',(nrow(tab)*2*indEll.n)),
-                              hoved=c(rep('NA',(nrow(tab)*2*indEll.n))),
-                              grunn=c(rep(rep(tab$NiN,each=2),indEll.n)),
-                              county=rep('all',(nrow(tab)*2*indEll.n)),
-                              region=rep('all',(nrow(tab)*2*indEll.n)),
-                              Ind=c(rep(c('CC1','CC2'),nrow(tab)),
-                                    rep(c('SS1','SS2'),nrow(tab)),
-                                    rep(c('RR1','RR2'),nrow(tab)),
-                                    rep(c('Light1','Light2'),nrow(tab)),
-                                    rep(c('Nitrogen1','Nitrogen2'),nrow(tab)),
-                                    rep(c('Soil_disturbance1','Soil_disturbance2'),nrow(tab))
-                              ),
-                              Rv=c(rep(tab$CC_q50,each=2),
-                                   rep(tab$SS_q50,each=2),
-                                   rep(tab$RR_q50,each=2),
-                                   rep(tab$Light_q50,each=2),
-                                   rep(tab$Nitrogen_q50,each=2),
-                                   rep(tab$Soil_disturbance_q50,each=2)
-                              ),
-                              Gv=c(y.CC,y.SS,y.RR,y.Light,y.Nitrogen,y.Soil_disturbance),
-                              maxmin=c(rep(c(0,1),nrow(tab)), # CC
-                                       rep(c(0,1),nrow(tab)), # SS
-                                       rep(c(0,1),nrow(tab)), # RR
-                                       rep(c(1,7),nrow(tab)),  # 7 levels of Light
-                                       rep(c(1,9),nrow(tab)),  # 9 levels of Nitrogen
-                                       rep(c(1,9),nrow(tab))  # 9 levels of Soil_disturbance
-                              )
+                                  hoved=c(rep('NA',(nrow(tab)*2*indEll.n))),
+                                  grunn=c(rep(rep(tab$NiN,each=2),indEll.n)),
+                                  county=rep('all',(nrow(tab)*2*indEll.n)),
+                                  region=rep('all',(nrow(tab)*2*indEll.n)),
+                                  Ind=c(rep(c('CC1','CC2'),nrow(tab)),
+                                        rep(c('SS1','SS2'),nrow(tab)),
+                                        rep(c('RR1','RR2'),nrow(tab)),
+                                        rep(c('Light1','Light2'),nrow(tab)),
+                                        rep(c('Nitrogen1','Nitrogen2'),nrow(tab)),
+                                        rep(c('Soil_disturbance1','Soil_disturbance2'),nrow(tab))
+                                  ),
+                                  Rv=c(rep(tab$CC_q50,each=2),
+                                       rep(tab$SS_q50,each=2),
+                                       rep(tab$RR_q50,each=2),
+                                       rep(tab$Light_q50,each=2),
+                                       rep(tab$Nitrogen_q50,each=2),
+                                       rep(tab$Soil_disturbance_q50,each=2)
+                                  ),
+                                  Gv=c(y.CC,y.SS,y.RR,y.Light,y.Nitrogen,y.Soil_disturbance),
+                                  maxmin=c(rep(c(0,1),nrow(tab)), # CC
+                                           rep(c(0,1),nrow(tab)), # SS
+                                           rep(c(0,1),nrow(tab)), # RR
+                                           rep(c(1,7),nrow(tab)),  # 7 levels of Light
+                                           rep(c(1,9),nrow(tab)),  # 9 levels of Nitrogen
+                                           rep(c(1,9),nrow(tab))  # 9 levels of Soil_disturbance
+                                  )
 )
 
 natopen.ref.cov.val
 natopen.ref.cov.val$grunn <- as.factor(natopen.ref.cov.val$grunn)
 natopen.ref.cov.val$Ind <- as.factor(natopen.ref.cov.val$Ind)
 summary(natopen.ref.cov.val)
+head(natopen.ref.cov.val)
+
+### add scaling values for cover of slitasje, alien sp., problem sp., woody species
+natopen.ref.cov.val <- natopen.ref.cov.val %>% add_row(N1="natopen",
+                                hoved=rep("T2",6),
+                                grunn=rep(c("T2-C-7","T2-C-8"),3),
+                                county=rep("all",6),
+                                region=rep("all",6),
+                                Ind=c("aliens","aliens","erosion","erosion","shrub","shrub"),
+                                Rv=c(100,100,100,100,90,90),
+                                Gv=c(95,95,93.75,93.75,75,75),
+                                maxmin=c(0,0,0,0,25,25)
+                )
 
 
 ```
@@ -887,201 +900,249 @@ for (i in 1:nrow(GRUK.natopen) ) {  #
     
     
     # if the GRUK.hovedtype exists in the reference
-#    if (GRUK.natopen$hovedtype_rute[i] %in% unique(substr(natopen.ref.cov.val$grunn,1,2)) ) {
+    #    if (GRUK.natopen$hovedtype_rute[i] %in% unique(substr(natopen.ref.cov.val$grunn,1,2)) ) {
+    
+    # if there is any species present in current GRUK point  
+    if ( length(GRUK.species.ind[GRUK.species.ind$ParentGlobalID==as.character(GRUK.natopen$GlobalID[i]),'Species']) > 0 ) {
       
-      # if there is any species present in current GRUK point  
-      if ( length(GRUK.species.ind[GRUK.species.ind$ParentGlobalID==as.character(GRUK.natopen$GlobalID[i]),'Species']) > 0 ) {
+      
+      # Grime's C
+      
+      dat <- GRUK.species.ind[GRUK.species.ind$ParentGlobalID==as.character(GRUK.natopen$GlobalID[i]),c('art_dekning','CC')]
+      results.natopen.GRUK[['original']][i,'richness'] <- nrow(dat)
+      dat <- dat[!is.na(dat$CC),]
+      
+      if ( nrow(dat)>0 ) {
         
+        val <- sum(dat[,'art_dekning'] * dat[,'CC'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
+        # lower part of distribution
+        ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+        lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+        maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
+        # coercing x into results.natopen.GRUK dataframe
+        results.natopen.GRUK[['scaled']][i,'CC1'] <- scal() 
+        results.natopen.GRUK[['non-truncated']][i,'CC1'] <- scal.2() 
+        results.natopen.GRUK[['original']][i,'CC1'] <- val 
         
-        # Grime's C
+        # upper part of distribution
+        ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+        lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+        maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
+        # coercing x into results.natopen.GRUK dataframe
+        results.natopen.GRUK[['scaled']][i,'CC2'] <- scal() 
+        results.natopen.GRUK[['non-truncated']][i,'CC2'] <- scal.2() 
+        results.natopen.GRUK[['original']][i,'CC2'] <- val
         
-        dat <- GRUK.species.ind[GRUK.species.ind$ParentGlobalID==as.character(GRUK.natopen$GlobalID[i]),c('art_dekning','CC')]
-        results.natopen.GRUK[['original']][i,'richness'] <- nrow(dat)
-        dat <- dat[!is.na(dat$CC),]
+      }
+      
+      
+      # Grime's S
+      dat <- GRUK.species.ind[GRUK.species.ind$ParentGlobalID==as.character(GRUK.natopen$GlobalID[i]),c('art_dekning','SS')]
+      results.natopen.GRUK[['original']][i,'richness'] <- nrow(dat)
+      dat <- dat[!is.na(dat$SS),]
+      
+      if ( nrow(dat)>0 ) {
         
-        if ( nrow(dat)>0 ) {
-          
-          val <- sum(dat[,'art_dekning'] * dat[,'CC'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
-          # lower part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
-          # coercing x into results.natopen.GRUK dataframe
-          results.natopen.GRUK[['scaled']][i,'CC1'] <- scal() 
-          results.natopen.GRUK[['non-truncated']][i,'CC1'] <- scal.2() 
-          results.natopen.GRUK[['original']][i,'CC1'] <- val 
-          
-          # upper part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='CC2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
-          # coercing x into results.natopen.GRUK dataframe
-          results.natopen.GRUK[['scaled']][i,'CC2'] <- scal() 
-          results.natopen.GRUK[['non-truncated']][i,'CC2'] <- scal.2() 
-          results.natopen.GRUK[['original']][i,'CC2'] <- val
-
-        }
+        val <- sum(dat[,'art_dekning'] * dat[,'SS'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
+        # lower part of distribution
+        ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+        lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+        maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
+        # coercing x into results.natopen.GRUK dataframe
+        results.natopen.GRUK[['scaled']][i,'SS1'] <- scal() 
+        results.natopen.GRUK[['non-truncated']][i,'SS1'] <- scal.2() 
+        results.natopen.GRUK[['original']][i,'SS1'] <- val
         
+        # upper part of distribution
+        ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+        lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+        maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
+        # coercing x into results.natopen.GRUK dataframe
+        results.natopen.GRUK[['scaled']][i,'SS2'] <- scal() 
+        results.natopen.GRUK[['non-truncated']][i,'SS2'] <- scal.2() 
+        results.natopen.GRUK[['original']][i,'SS2'] <- val
         
-        # Grime's S
-        dat <- GRUK.species.ind[GRUK.species.ind$ParentGlobalID==as.character(GRUK.natopen$GlobalID[i]),c('art_dekning','SS')]
-        results.natopen.GRUK[['original']][i,'richness'] <- nrow(dat)
-        dat <- dat[!is.na(dat$SS),]
+      }
+      
+      
+      # Grime's R
+      dat <- GRUK.species.ind[GRUK.species.ind$ParentGlobalID==as.character(GRUK.natopen$GlobalID[i]),c('art_dekning','RR')]
+      results.natopen.GRUK[['original']][i,'richness'] <- nrow(dat)
+      dat <- dat[!is.na(dat$RR),]
+      
+      if ( nrow(dat)>0 ) {
         
-        if ( nrow(dat)>0 ) {
-          
-          val <- sum(dat[,'art_dekning'] * dat[,'SS'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
-          # lower part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
-          # coercing x into results.natopen.GRUK dataframe
-          results.natopen.GRUK[['scaled']][i,'SS1'] <- scal() 
-          results.natopen.GRUK[['non-truncated']][i,'SS1'] <- scal.2() 
-          results.natopen.GRUK[['original']][i,'SS1'] <- val
-          
-          # upper part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='SS2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
-          # coercing x into results.natopen.GRUK dataframe
-          results.natopen.GRUK[['scaled']][i,'SS2'] <- scal() 
-          results.natopen.GRUK[['non-truncated']][i,'SS2'] <- scal.2() 
-          results.natopen.GRUK[['original']][i,'SS2'] <- val
-          
-        }
+        val <- sum(dat[,'art_dekning'] * dat[,'RR'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
+        # lower part of distribution
+        ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+        lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+        maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
+        # coercing x into results.natopen.GRUK dataframe
+        results.natopen.GRUK[['scaled']][i,'RR1'] <- scal() 
+        results.natopen.GRUK[['non-truncated']][i,'RR1'] <- scal.2() 
+        results.natopen.GRUK[['original']][i,'RR1'] <- val
         
+        # upper part of distribution
+        ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+        lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+        maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
+        # coercing x into results.natopen.GRUK dataframe
+        results.natopen.GRUK[['scaled']][i,'RR2'] <- scal() 
+        results.natopen.GRUK[['non-truncated']][i,'RR2'] <- scal.2() 
+        results.natopen.GRUK[['original']][i,'RR2'] <- val
         
-        # Grime's R
-        dat <- GRUK.species.ind[GRUK.species.ind$ParentGlobalID==as.character(GRUK.natopen$GlobalID[i]),c('art_dekning','RR')]
-        results.natopen.GRUK[['original']][i,'richness'] <- nrow(dat)
-        dat <- dat[!is.na(dat$RR),]
+      }
+      
+      
+      # Light
+      dat <- GRUK.species.ind[GRUK.species.ind$ParentGlobalID==as.character(GRUK.natopen$GlobalID[i]),c('art_dekning','Light')]
+      results.natopen.GRUK[['original']][i,'richness'] <- nrow(dat)
+      dat <- dat[!is.na(dat$Light),]
+      
+      if ( nrow(dat)>0 ) {
         
-        if ( nrow(dat)>0 ) {
-          
-          val <- sum(dat[,'art_dekning'] * dat[,'RR'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
-          # lower part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
-          # coercing x into results.natopen.GRUK dataframe
-          results.natopen.GRUK[['scaled']][i,'RR1'] <- scal() 
-          results.natopen.GRUK[['non-truncated']][i,'RR1'] <- scal.2() 
-          results.natopen.GRUK[['original']][i,'RR1'] <- val
-          
-          # upper part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='RR2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
-          # coercing x into results.natopen.GRUK dataframe
-          results.natopen.GRUK[['scaled']][i,'RR2'] <- scal() 
-          results.natopen.GRUK[['non-truncated']][i,'RR2'] <- scal.2() 
-          results.natopen.GRUK[['original']][i,'RR2'] <- val
-          
-        }
+        val <- sum(dat[,'art_dekning'] * dat[,'Light'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
+        # lower part of distribution
+        ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+        lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+        maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
+        # coercing x into results.natopen.GRUK dataframe
+        results.natopen.GRUK[['scaled']][i,'Light1'] <- scal() 
+        results.natopen.GRUK[['non-truncated']][i,'Light1'] <- scal.2() 
+        results.natopen.GRUK[['original']][i,'Light1'] <- val
         
-        
-        # Light
-        dat <- GRUK.species.ind[GRUK.species.ind$ParentGlobalID==as.character(GRUK.natopen$GlobalID[i]),c('art_dekning','Light')]
-        results.natopen.GRUK[['original']][i,'richness'] <- nrow(dat)
-        dat <- dat[!is.na(dat$Light),]
-        
-        if ( nrow(dat)>0 ) {
-          
-          val <- sum(dat[,'art_dekning'] * dat[,'Light'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
-          # lower part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
-          # coercing x into results.natopen.GRUK dataframe
-          results.natopen.GRUK[['scaled']][i,'Light1'] <- scal() 
-          results.natopen.GRUK[['non-truncated']][i,'Light1'] <- scal.2() 
-          results.natopen.GRUK[['original']][i,'Light1'] <- val
-          
-          # upper part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
-          # coercing x into results.natopen.GRUK dataframe
-          results.natopen.GRUK[['scaled']][i,'Light2'] <- scal() 
-          results.natopen.GRUK[['non-truncated']][i,'Light2'] <- scal.2() 
-          results.natopen.GRUK[['original']][i,'Light2'] <- val
-          
-
-        }
-        
-        
-        
-        
-        # Nitrogen
-        dat <- GRUK.species.ind[GRUK.species.ind$ParentGlobalID==as.character(GRUK.natopen$GlobalID[i]),c('art_dekning','Nitrogen')]
-        results.natopen.GRUK[['original']][i,'richness'] <- nrow(dat)
-        dat <- dat[!is.na(dat$Nitrogen),]
-        
-        if ( nrow(dat)>0 ) {
-          
-          val <- sum(dat[,'art_dekning'] * dat[,'Nitrogen'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
-          # lower part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
-          # coercing x into results.natopen.GRUK dataframe
-          results.natopen.GRUK[['scaled']][i,'Nitrogen1'] <- scal() 
-          results.natopen.GRUK[['non-truncated']][i,'Nitrogen1'] <- scal.2() 
-          results.natopen.GRUK[['original']][i,'Nitrogen1'] <- val
-          
-
-          # upper part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
-          # coercing x into results.natopen.GRUK dataframe
-          results.natopen.GRUK[['scaled']][i,'Nitrogen2'] <- scal() 
-          results.natopen.GRUK[['non-truncated']][i,'Nitrogen2'] <- scal.2() 
-          results.natopen.GRUK[['original']][i,'Nitrogen2'] <- val
-          
-        }
-        
-        
-        
-        
-        
-        
-        # Soil_disturbance
-        dat <- GRUK.species.ind[GRUK.species.ind$ParentGlobalID==as.character(GRUK.natopen$GlobalID[i]),c('art_dekning','Soil_disturbance')]
-        results.natopen.GRUK[['original']][i,'richness'] <- nrow(dat)
-        dat <- dat[!is.na(dat$Soil_disturbance),]
-        
-        if ( nrow(dat)>0 ) {
-          
-          val <- sum(dat[,'art_dekning'] * dat[,'Soil_disturbance'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
-          # lower part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
-          # coercing x into results.natopen.GRUK dataframe
-          results.natopen.GRUK[['scaled']][i,'Soil_disturbance1'] <- scal() 
-          results.natopen.GRUK[['non-truncated']][i,'Soil_disturbance1'] <- scal.2() 
-          results.natopen.GRUK[['original']][i,'Soil_disturbance1'] <- val
-          
-
-          # upper part of distribution
-          ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
-          lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
-          maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
-          # coercing x into results.natopen.GRUK dataframe
-          results.natopen.GRUK[['scaled']][i,'Soil_disturbance2'] <- scal() 
-          results.natopen.GRUK[['non-truncated']][i,'Soil_disturbance2'] <- scal.2() 
-          results.natopen.GRUK[['original']][i,'Soil_disturbance2'] <- val
-          
-        }
-        
+        # upper part of distribution
+        ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+        lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+        maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Light2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
+        # coercing x into results.natopen.GRUK dataframe
+        results.natopen.GRUK[['scaled']][i,'Light2'] <- scal() 
+        results.natopen.GRUK[['non-truncated']][i,'Light2'] <- scal.2() 
+        results.natopen.GRUK[['original']][i,'Light2'] <- val
         
         
       }
-#    }
+      
+      
+      
+      
+      # Nitrogen
+      dat <- GRUK.species.ind[GRUK.species.ind$ParentGlobalID==as.character(GRUK.natopen$GlobalID[i]),c('art_dekning','Nitrogen')]
+      results.natopen.GRUK[['original']][i,'richness'] <- nrow(dat)
+      dat <- dat[!is.na(dat$Nitrogen),]
+      
+      if ( nrow(dat)>0 ) {
+        
+        val <- sum(dat[,'art_dekning'] * dat[,'Nitrogen'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
+        # lower part of distribution
+        ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+        lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+        maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
+        # coercing x into results.natopen.GRUK dataframe
+        results.natopen.GRUK[['scaled']][i,'Nitrogen1'] <- scal() 
+        results.natopen.GRUK[['non-truncated']][i,'Nitrogen1'] <- scal.2() 
+        results.natopen.GRUK[['original']][i,'Nitrogen1'] <- val
+        
+        
+        # upper part of distribution
+        ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+        lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+        maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Nitrogen2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
+        # coercing x into results.natopen.GRUK dataframe
+        results.natopen.GRUK[['scaled']][i,'Nitrogen2'] <- scal() 
+        results.natopen.GRUK[['non-truncated']][i,'Nitrogen2'] <- scal.2() 
+        results.natopen.GRUK[['original']][i,'Nitrogen2'] <- val
+        
+      }
+      
+      
+      
+      
+      
+      
+      # Soil_disturbance
+      dat <- GRUK.species.ind[GRUK.species.ind$ParentGlobalID==as.character(GRUK.natopen$GlobalID[i]),c('art_dekning','Soil_disturbance')]
+      results.natopen.GRUK[['original']][i,'richness'] <- nrow(dat)
+      dat <- dat[!is.na(dat$Soil_disturbance),]
+      
+      if ( nrow(dat)>0 ) {
+        
+        val <- sum(dat[,'art_dekning'] * dat[,'Soil_disturbance'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
+        # lower part of distribution
+        ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+        lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance1' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+        maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance1' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
+        # coercing x into results.natopen.GRUK dataframe
+        results.natopen.GRUK[['scaled']][i,'Soil_disturbance1'] <- scal() 
+        results.natopen.GRUK[['non-truncated']][i,'Soil_disturbance1'] <- scal.2() 
+        results.natopen.GRUK[['original']][i,'Soil_disturbance1'] <- val
+        
+        
+        # upper part of distribution
+        ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Rv']
+        lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance2' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),"_BN",sep=""),'Gv']
+        maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='Soil_disturbance2' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
+        # coercing x into results.natopen.GRUK dataframe
+        results.natopen.GRUK[['scaled']][i,'Soil_disturbance2'] <- scal() 
+        results.natopen.GRUK[['non-truncated']][i,'Soil_disturbance2'] <- scal.2() 
+        results.natopen.GRUK[['original']][i,'Soil_disturbance2'] <- val
+        
+      }
+      
+    }
+    #    }
     
-    
+       # Area cover without alien species
+      dat <- GRUK.natopen[i,"Totaldekning_fremmedearter"]
+      
+      if ( !is.na(dat) ) {
+        
+        val <- 100-dat
+        # one-sided indicator
+        ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='aliens' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"])),'Rv']
+        lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='aliens' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"])),'Gv']
+        maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='aliens' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
+        # coercing x into results.natopen.GRUK dataframe
+        results.natopen.GRUK[['scaled']][i,'aliens'] <- scal() 
+        results.natopen.GRUK[['non-truncated']][i,'aliens'] <- scal() 
+        results.natopen.GRUK[['original']][i,'aliens'] <- val
+        
+      }    
+      
+      ## run the indicators that are not dependent on species in the plot
+      # Area cover without erosion
+      dat <- GRUK.natopen[i,"erosjon_prosent"]
+      
+      if ( !is.na(dat) ) {
+        
+        val <- 100-dat
+        # one-sided indicator
+        ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='erosion' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"])),'Rv']
+        lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='erosion' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"])),'Gv']
+        maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='erosion' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
+        # coercing x into results.natopen.GRUK dataframe
+        results.natopen.GRUK[['scaled']][i,'erosion'] <- scal() 
+        results.natopen.GRUK[['non-truncated']][i,'erosion'] <- scal() 
+        results.natopen.GRUK[['original']][i,'erosion'] <- val
+        
+      } 
+      
+      # area cover without shrub cover
+      dat <- GRUK.natopen[i,"Dekning_busker_busksjikt"]
+      
+      if ( !is.na(dat) ) {
+        
+        val <- 100-dat
+        # one-sided indicator
+        ref <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='shrub' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"])),'Rv']
+        lim <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='shrub' & natopen.ref.cov.val$grunn==paste(as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"])),'Gv']
+        maxmin <- natopen.ref.cov.val[natopen.ref.cov.val$Ind=='shrub' & natopen.ref.cov.val$grunn==as.character(results.natopen.GRUK[['original']][i,"Kartleggingsenhet_1til5000"]),'maxmin']
+        # coercing x into results.natopen.GRUK dataframe
+        results.natopen.GRUK[['scaled']][i,'shrub'] <- scal() 
+        results.natopen.GRUK[['non-truncated']][i,'shrub'] <- scal() 
+        results.natopen.GRUK[['original']][i,'shrub'] <- val
+        
+      }
     
   }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
 }
@@ -1109,7 +1170,6 @@ results.natopen.GRUK[['2-sided']]$Soil_disturbance1[results.natopen.GRUK[['2-sid
 results.natopen.GRUK[['2-sided']]$Soil_disturbance2[results.natopen.GRUK[['2-sided']]$Soil_disturbance2>1] <- NA
 
 #saveRDS(results.natopen.GRUK, "data/cache/results.natopen.GRUK.RDS")
-
 ```
 
 
