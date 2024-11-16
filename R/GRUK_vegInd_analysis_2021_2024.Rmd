@@ -1201,7 +1201,8 @@ res.natopen.GRUK <-
              "RR1","RR2",
              "Light1","Light2",
              "Nitrogen1","Nitrogen2",
-             "Soil_disturbance1","Soil_disturbance2"),
+             "Soil_disturbance1","Soil_disturbance2",
+             "aliens","erosion","shrub"),
     names_to = "fp_ind",
     values_to = "scaled_value",
     values_drop_na = FALSE
@@ -1216,7 +1217,8 @@ res.natopen.GRUK <-
                                               "RR1","RR2",
                                               "Light1","Light2",
                                               "Nitrogen1","Nitrogen2",
-                                              "Soil_disturbance1","Soil_disturbance2"),
+                                              "Soil_disturbance1","Soil_disturbance2",
+                                              "aliens","erosion","shrub"),
                                      names_to = NULL,
                                      values_to = "original",
                                      values_drop_na = FALSE
@@ -1231,8 +1233,25 @@ summary(res.natopen.GRUK)
 
 ```
 
-### Ecosystem sub-types
-We can show the resulting scaled values as Violin plots for each indicator and main ecosystem type 
+### Ecologcial condition indicators
+We can show the resulting scaled values as Violin plots for each the circle-based indicators
+```{r,echo=FALSE,message=FALSE, warning=FALSE}
+
+# plotting scaled values by indicator
+res.natopen.GRUK %>%
+  filter(fp_ind %in% c("aliens","erosion","shrub")) %>%
+  ggplot(aes(x=fp_ind,y=scaled_value, fill=fp_ind)) +
+  geom_hline(yintercept=0.6, linetype="dashed") + 
+  geom_violin(color=NA)+
+  geom_point(size=1, shape=16, color="black") + 
+  xlab("Area without cover of...") + 
+  ylab("Scaled indicator value") + 
+  theme(legend.position="none")
+
+
+```
+
+We can show the resulting scaled values as Violin plots for each plant indicator and main ecosystem type 
 ```{r,echo=FALSE,message=FALSE, warning=FALSE}
 
 # plotting scaled values by ecosystem type
