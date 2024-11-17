@@ -21,6 +21,7 @@ library(raster)
 library(stars)
 library(betareg)
 library(glmmTMB)
+library(statmod)
 library(knitr)
 
 knitr::opts_chunk$set(echo = TRUE)
@@ -912,7 +913,7 @@ for (i in 1:nrow(GRUK.natopen) ) {  #
       results.natopen.GRUK[['original']][i,'richness'] <- nrow(dat)
       dat <- dat[!is.na(dat$CC),]
       
-      if ( nrow(dat)>0 ) {
+      if ( nrow(dat)>2 ) {
         
         val <- sum(dat[,'art_dekning'] * dat[,'CC'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
         # lower part of distribution
@@ -941,7 +942,7 @@ for (i in 1:nrow(GRUK.natopen) ) {  #
       results.natopen.GRUK[['original']][i,'richness'] <- nrow(dat)
       dat <- dat[!is.na(dat$SS),]
       
-      if ( nrow(dat)>0 ) {
+      if ( nrow(dat)>2 ) {
         
         val <- sum(dat[,'art_dekning'] * dat[,'SS'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
         # lower part of distribution
@@ -970,7 +971,7 @@ for (i in 1:nrow(GRUK.natopen) ) {  #
       results.natopen.GRUK[['original']][i,'richness'] <- nrow(dat)
       dat <- dat[!is.na(dat$RR),]
       
-      if ( nrow(dat)>0 ) {
+      if ( nrow(dat)>2 ) {
         
         val <- sum(dat[,'art_dekning'] * dat[,'RR'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
         # lower part of distribution
@@ -999,7 +1000,7 @@ for (i in 1:nrow(GRUK.natopen) ) {  #
       results.natopen.GRUK[['original']][i,'richness'] <- nrow(dat)
       dat <- dat[!is.na(dat$Light),]
       
-      if ( nrow(dat)>0 ) {
+      if ( nrow(dat)>2 ) {
         
         val <- sum(dat[,'art_dekning'] * dat[,'Light'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
         # lower part of distribution
@@ -1031,7 +1032,7 @@ for (i in 1:nrow(GRUK.natopen) ) {  #
       results.natopen.GRUK[['original']][i,'richness'] <- nrow(dat)
       dat <- dat[!is.na(dat$Nitrogen),]
       
-      if ( nrow(dat)>0 ) {
+      if ( nrow(dat)>2 ) {
         
         val <- sum(dat[,'art_dekning'] * dat[,'Nitrogen'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
         # lower part of distribution
@@ -1065,7 +1066,7 @@ for (i in 1:nrow(GRUK.natopen) ) {  #
       results.natopen.GRUK[['original']][i,'richness'] <- nrow(dat)
       dat <- dat[!is.na(dat$Soil_disturbance),]
       
-      if ( nrow(dat)>0 ) {
+      if ( nrow(dat)>2 ) {
         
         val <- sum(dat[,'art_dekning'] * dat[,'Soil_disturbance'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
         # lower part of distribution
@@ -1185,16 +1186,41 @@ head(results.natopen.GRUK[['2-sided']])
 ```
 #### Scaled value analyses
 
+Aggregation of indicators
+```{r, message = FALSE, warning = FALSE}
+
+## continuing with 2-sided
+res.natopen.GRUK_wide <- results.natopen.GRUK[['2-sided']]
+
+## aggregating the functional plant indicators by the 'verste-styrer' principle
+# and aggregating fpi and the other indicatros by arithmetic mean
+res.natopen.GRUK_wide <- res.natopen.GRUK_wide %>%
+  rowwise() %>%
+  mutate(fpi = min(Light1,Light2,Nitrogen1,Nitrogen2,Soil_disturbance1,Soil_disturbance2,na.rm=T)) %>%
+  mutate(fpi = na_if(fpi,Inf)) %>%
+  mutate(ec.mean_agg = mean(c(fpi,aliens,erosion,shrub), na.rm=T))
+
+## aggregating fpi and other indicators by beta-regression null-models
+expit <- function(L) exp(L) / (1+exp(L)) # expit function for backtransforming from logit-link
+res.natopen.GRUK$ec.beta_agg <- NA
+for (i in 1:nrow(res.natopen.GRUK_wide) ) {
+  
+  dat <- as.vector(unlist(res.natopen.GRUK_wide[i,c("fpi","aliens","erosion","shrub")]))
+  dat[!is.na(dat) & dat==0] <- rnorm( length(dat[!is.na(dat) & dat==0]) ,0.0001,0.000001)
+  dat[!is.na(dat) & dat==1] <- rnorm( length(dat[!is.na(dat) & dat==1]) ,0.9999,0.000001)
+  res.natopen.GRUK_wide[i,"ec.beta_agg"] <- expit(summary(betareg(dat~1))$coefficients$mean[1])
+
+}
+```
+
 In order to visualize the results we need to rearrange the results-objects from wide to long format (note that there is both a lower and an upper condition indicator for each of the functional plant indicators).
 
 ```{r, message = FALSE}
 #### scaled values by main ecosystem type ####
-## continuing with 2-sided
-res.natopen.GRUK <- results.natopen.GRUK[['2-sided']]
 
 # make long version of the scaled value part
 res.natopen.GRUK <-
-  res.natopen.GRUK %>% 
+  res.natopen.GRUK_wide %>% 
   pivot_longer(
     cols = c("CC1","CC2",
              "SS1","SS2",
@@ -1203,7 +1229,7 @@ res.natopen.GRUK <-
              "Nitrogen1","Nitrogen2",
              "Soil_disturbance1","Soil_disturbance2",
              "aliens","erosion","shrub"),
-    names_to = "fp_ind",
+    names_to = "ec.index",
     values_to = "scaled_value",
     values_drop_na = FALSE
   )
@@ -1239,8 +1265,8 @@ We can show the resulting scaled values as Violin plots for each the circle-base
 
 # plotting scaled values by indicator
 res.natopen.GRUK %>%
-  filter(fp_ind %in% c("aliens","erosion","shrub")) %>%
-  ggplot(aes(x=fp_ind,y=scaled_value, fill=fp_ind)) +
+  filter(ec.index %in% c("aliens","erosion","shrub")) %>%
+  ggplot(aes(x=ec.index,y=scaled_value, fill=ec.index)) +
   geom_hline(yintercept=0.6, linetype="dashed") + 
   geom_violin(color=NA)+
   geom_point(size=1, shape=16, color="black") + 
@@ -1255,12 +1281,12 @@ We can show the resulting scaled values as Violin plots for each plant indicator
 ```{r,echo=FALSE,message=FALSE, warning=FALSE}
 
 # plotting scaled values by ecosystem type
-ggplot(res.natopen.GRUK, aes(x=factor(Kartleggingsenhet_1til5000), y=scaled_value, fill=fp_ind)) + 
+ggplot(res.natopen.GRUK, aes(x=factor(Kartleggingsenhet_1til5000), y=scaled_value, fill=ec.index)) + 
   geom_hline(yintercept=0.6, linetype="dashed") + 
   geom_violin(color = NA) +
   #  geom_boxplot(width=0.2, color="grey") +
   geom_point(size=1, shape=16, color="black") +
-  facet_wrap(~factor(fp_ind,levels=c("CC1","SS1","RR1","Light1","Nitrogen1","Soil_disturbance1",
+  facet_wrap(~factor(ec.index,levels=c("CC1","SS1","RR1","Light1","Nitrogen1","Soil_disturbance1",
                                      "CC2","SS2","RR2","Light2","Nitrogen2","Soil_disturbance2"),
                      labels=c("CSR-C1","CSR-S1","CSR-R1","Light1","Nitrogen1","Soil_disturbance1",
                               "CSR-C2","CSR-S2","CSR-R2","Light2","Nitrogen2","Soil_disturbance2")), ncol = 6) + 
@@ -1284,7 +1310,7 @@ y2 <- c("Light1","Light2","Nitrogen1","Nitrogen2","Soil_disturbance1","Soil_dist
 par(mfrow=c(5,6))
 for (i in x) {
   for (j in y1) {
-    df <- res.natopen.GRUK[res.natopen.GRUK$fp_ind==j,c(i,'scaled_value')]
+    df <- res.natopen.GRUK[res.natopen.GRUK$ec.index==j,c(i,'scaled_value')]
     names(df) <- c("xx","yy")
     df$xx <- as.numeric(df$xx)
     df$yy <- as.numeric(df$yy)
@@ -1300,7 +1326,7 @@ for (i in x) {
 par(mfrow=c(5,6))
 for (i in x) {
   for (j in y2) {
-    df <- res.natopen.GRUK[res.natopen.GRUK$fp_ind==j,c(i,'scaled_value')]
+    df <- res.natopen.GRUK[res.natopen.GRUK$ec.index==j,c(i,'scaled_value')]
     names(df) <- c("xx","yy")
     df$xx <- as.numeric(df$xx)
     df$yy <- as.numeric(df$yy)
@@ -1329,19 +1355,19 @@ res.natopen.GRUK <- res.natopen.GRUK %>%
   mutate(scaled_value2 = ifelse(scaled_value2 > 0.999, 0.999, scaled_value2) )
 
 
-summary( glmmTMB(scaled_value2 ~ Dekning_tresjikt +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Light1",]) )
+summary( glmmTMB(scaled_value2 ~ Dekning_tresjikt +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$ec.index=="Light1",]) )
 
-summary( glmmTMB(scaled_value2 ~ erosjon_prosent +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Light2",]) )
+summary( glmmTMB(scaled_value2 ~ erosjon_prosent +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$ec.index=="Light2",]) )
 
-summary( glmmTMB(scaled_value2 ~ Totaldekning_fremmedearter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Nitrogen2",]) )
+summary( glmmTMB(scaled_value2 ~ Totaldekning_fremmedearter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$ec.index=="Nitrogen2",]) )
 
-summary( glmmTMB(scaled_value2 ~ Dekning_tresjikt +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Soil_disturbance1",]) )
+summary( glmmTMB(scaled_value2 ~ Dekning_tresjikt +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$ec.index=="Soil_disturbance1",]) )
 
-summary( glmmTMB(scaled_value2 ~ Dekning_problemarter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Soil_disturbance2",]) )
+summary( glmmTMB(scaled_value2 ~ Dekning_problemarter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$ec.index=="Soil_disturbance2",]) )
 
-summary( glmmTMB(scaled_value2 ~ Totaldekning_fremmedearter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="CC2",]) )
+summary( glmmTMB(scaled_value2 ~ Totaldekning_fremmedearter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$ec.index=="CC2",]) )
 
-summary( glmmTMB(scaled_value2 ~ Dekning_problemarter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="CC2",]) )
+summary( glmmTMB(scaled_value2 ~ Dekning_problemarter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$ec.index=="CC2",]) )
 
 
 ```
@@ -1352,14 +1378,14 @@ Plotting relevant scatterplots and models
 ## Light1 vs. Dekning_tresjikt
 # basic scatterplot
 p_L1_tre <- res.natopen.GRUK %>%
-  filter(fp_ind=="Light1") %>%
+  filter(ec.index=="Light1") %>%
   ggplot(aes(x=Dekning_tresjikt, y=scaled_value)) +
   geom_point() +
   coord_cartesian(xlim = c(0, 100),ylim = c(0, 1)) +
   labs(y = "Light1", x = "Tree cover (%)") # (Light index towards lower limit value)
 
 # model and model prediction
-mod <- glmmTMB(scaled_value2 ~ Dekning_tresjikt +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Light1",])
+mod <- glmmTMB(scaled_value2 ~ Dekning_tresjikt +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$ec.index=="Light1",])
 pred <- data.frame(
   mu = predict(mod,newdata=data.frame(Dekning_tresjikt=0:100),type='link',re.form=NA),
   se = predict(mod,newdata=data.frame(Dekning_tresjikt=0:100),type='link',re.form=NA,se.fit=T)$se.fit
@@ -1382,14 +1408,14 @@ p_L1_tre <- p_L1_tre +
 ## Light2 vs. erosjon_prosent
 # basic scatterplot
 p_L2_slit <- res.natopen.GRUK %>%
-  filter(fp_ind=="Light2") %>%
+  filter(ec.index=="Light2") %>%
   ggplot(aes(x=erosjon_prosent, y=scaled_value)) +
   geom_point() +
   coord_cartesian(xlim = c(0, 100),ylim = c(0, 1)) +
   labs(y = "Light2", x = "Erosion/Disturbance cover (%)") # (Light index towards upper limit value)
 
 # model and model prediction
-mod <- glmmTMB(scaled_value2 ~ erosjon_prosent +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Light2",])
+mod <- glmmTMB(scaled_value2 ~ erosjon_prosent +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$ec.index=="Light2",])
 pred <- data.frame(
   mu = predict(mod,newdata=data.frame(erosjon_prosent=0:100),type='link',re.form=NA),
   se = predict(mod,newdata=data.frame(erosjon_prosent=0:100),type='link',re.form=NA,se.fit=T)$se.fit
@@ -1412,14 +1438,14 @@ p_L2_slit <- p_L2_slit +
 ## Nitrogen2 vs. Totaldekning_fremmedearter
 # basic scatterplot
 p_N2_frem <- res.natopen.GRUK %>%
-  filter(fp_ind=="Nitrogen2") %>%
+  filter(ec.index=="Nitrogen2") %>%
   ggplot(aes(x=Totaldekning_fremmedearter, y=scaled_value)) +
   geom_point() +
   coord_cartesian(xlim = c(0, 100),ylim = c(0, 1)) +
   labs(y = "Nitrogen2", x = "Alien plant species cover (%)") # (Nitrogen index towards upper limit value)
 
 # model and model prediction
-mod <- glmmTMB(scaled_value2 ~ Totaldekning_fremmedearter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Nitrogen2",])
+mod <- glmmTMB(scaled_value2 ~ Totaldekning_fremmedearter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$ec.index=="Nitrogen2",])
 pred <- data.frame(
   mu = predict(mod,newdata=data.frame(Totaldekning_fremmedearter=0:100),type='link',re.form=NA),
   se = predict(mod,newdata=data.frame(Totaldekning_fremmedearter=0:100),type='link',re.form=NA,se.fit=T)$se.fit
@@ -1442,14 +1468,14 @@ p_N2_frem <- p_N2_frem +
 ## Soil_disturbance1 vs. Dekning_tresjikt
 # basic scatterplot
 p_Sd1_tre <- res.natopen.GRUK %>%
-  filter(fp_ind=="Soil_disturbance1") %>%
+  filter(ec.index=="Soil_disturbance1") %>%
   ggplot(aes(x=Dekning_tresjikt, y=scaled_value)) +
   geom_point() +
   coord_cartesian(xlim = c(0, 100),ylim = c(0, 1)) +
   labs(y = "Disturbance1", x = "Tree cover (%)") # (Soil disturbance index towards lower limit value)
 
 # model and model prediction
-mod <- glmmTMB(scaled_value2 ~ Dekning_tresjikt +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Soil_disturbance1",])
+mod <- glmmTMB(scaled_value2 ~ Dekning_tresjikt +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$ec.index=="Soil_disturbance1",])
 pred <- data.frame(
   mu = predict(mod,newdata=data.frame(Dekning_tresjikt=0:100),type='link',re.form=NA),
   se = predict(mod,newdata=data.frame(Dekning_tresjikt=0:100),type='link',re.form=NA,se.fit=T)$se.fit
@@ -1472,14 +1498,14 @@ p_Sd1_tre <- p_Sd1_tre +
 ## Soil_disturbance2 vs. Dekning_problemarter
 # basic scatterplot
 p_Sd2_prob <- res.natopen.GRUK %>%
-  filter(fp_ind=="Soil_disturbance2") %>%
+  filter(ec.index=="Soil_disturbance2") %>%
   ggplot(aes(x=Dekning_problemarter, y=scaled_value)) +
   geom_point() +
   coord_cartesian(xlim = c(0, 100),ylim = c(0, 1)) +
   labs(y = "Disturbance2", x = "Problem species cover (%)") # (Soil disturbance index towards upper limit value)
 
 # model and model prediction
-mod <- glmmTMB(scaled_value2 ~ Dekning_problemarter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="Soil_disturbance2",])
+mod <- glmmTMB(scaled_value2 ~ Dekning_problemarter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$ec.index=="Soil_disturbance2",])
 pred <- data.frame(
   mu = predict(mod,newdata=data.frame(Dekning_problemarter=0:100),type='link',re.form=NA),
   se = predict(mod,newdata=data.frame(Dekning_problemarter=0:100),type='link',re.form=NA,se.fit=T)$se.fit
@@ -1502,14 +1528,14 @@ p_Sd2_prob <- p_Sd2_prob +
 ## CC2 vs. Dekning_problemarter
 # basic scatterplot
 p_CC2_prob <- res.natopen.GRUK %>%
-  filter(fp_ind=="CC2") %>%
+  filter(ec.index=="CC2") %>%
   ggplot(aes(x=Dekning_problemarter, y=scaled_value)) +
   geom_point() +
   coord_cartesian(xlim = c(0, 100),ylim = c(0, 1)) +
   labs(y = "CSR-C2", x = "Problem species cover (%)") #  (Grime's C index towards upper limit value)
 
 # model and model prediction
-mod <- glmmTMB(scaled_value2 ~ Dekning_problemarter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="CC2",])
+mod <- glmmTMB(scaled_value2 ~ Dekning_problemarter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$ec.index=="CC2",])
 pred <- data.frame(
   mu = predict(mod,newdata=data.frame(Dekning_problemarter=0:100),type='link',re.form=NA),
   se = predict(mod,newdata=data.frame(Dekning_problemarter=0:100),type='link',re.form=NA,se.fit=T)$se.fit
@@ -1532,14 +1558,14 @@ p_CC2_prob <- p_CC2_prob +
 ## CC2 vs. Totaldekning_fremmedearter
 # basic scatterplot
 p_CC2_frem <- res.natopen.GRUK %>%
-  filter(fp_ind=="CC2") %>%
+  filter(ec.index=="CC2") %>%
   ggplot(aes(x=Totaldekning_fremmedearter, y=scaled_value)) +
   geom_point() +
   coord_cartesian(xlim = c(0, 100),ylim = c(0, 1)) +
   labs(y = "CSR-C2", x = "Alien species cover (%)") # (Grime's C index towards upper limit value)
 
 # model and model prediction
-mod <- glmmTMB(scaled_value2 ~ Totaldekning_fremmedearter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$fp_ind=="CC2",])
+mod <- glmmTMB(scaled_value2 ~ Totaldekning_fremmedearter +(1|LokalitetID), family=beta_family(), data=res.natopen.GRUK[res.natopen.GRUK$ec.index=="CC2",])
 pred <- data.frame(
   mu = predict(mod,newdata=data.frame(Totaldekning_fremmedearter=0:100),type='link',re.form=NA),
   se = predict(mod,newdata=data.frame(Totaldekning_fremmedearter=0:100),type='link',re.form=NA,se.fit=T)$se.fit
