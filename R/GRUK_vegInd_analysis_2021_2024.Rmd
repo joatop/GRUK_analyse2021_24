@@ -1261,7 +1261,7 @@ summary(res.natopen.GRUK)
 
 ### Ecologcial condition indicators
 We can show the resulting scaled values as Violin plots for each the circle-based indicators
-```{r,echo=FALSE,message=FALSE, warning=FALSE}
+```{r, message=FALSE, warning=FALSE}
 
 # plotting scaled values by indicator
 res.natopen.GRUK %>%
@@ -1277,11 +1277,14 @@ res.natopen.GRUK %>%
 
 ```
 
-We can show the resulting scaled values as Violin plots for each plant indicator and main ecosystem type 
-```{r,echo=FALSE,message=FALSE, warning=FALSE}
+We can show the resulting scaled values as Violin plots for each plant indicator in both T2-C7 and T2-C8 or for GRUK alltogether
+```{r, message=FALSE, warning=FALSE}
 
 # plotting scaled values by ecosystem type
-ggplot(res.natopen.GRUK, aes(x=factor(Kartleggingsenhet_1til5000), y=scaled_value, fill=ec.index)) + 
+res.natopen.GRUK %>%
+  filter(ec.index %in% c("CC1","SS1","RR1","Light1","Nitrogen1","Soil_disturbance1",
+                         "CC2","SS2","RR2","Light2","Nitrogen2","Soil_disturbance2")) %>%
+ggplot(aes(x=factor(Kartleggingsenhet_1til5000), y=scaled_value, fill=ec.index)) + 
   geom_hline(yintercept=0.6, linetype="dashed") + 
   geom_violin(color = NA) +
   #  geom_boxplot(width=0.2, color="grey") +
@@ -1295,6 +1298,23 @@ ggplot(res.natopen.GRUK, aes(x=factor(Kartleggingsenhet_1til5000), y=scaled_valu
   theme(legend.position="none") +
   theme(axis.text.x = element_text(angle = -45, vjust = 0.5, hjust=0.2))
 
+
+res.natopen.GRUK %>%
+  filter(ec.index %in% c("CC1","SS1","RR1","Light1","Nitrogen1","Soil_disturbance1",
+                         "CC2","SS2","RR2","Light2","Nitrogen2","Soil_disturbance2")) %>%
+ggplot(aes(x=ec.index, y=scaled_value, fill=ec.index)) + 
+  geom_hline(yintercept=0.6, linetype="dashed") + 
+  geom_violin(color = NA) +
+  #  geom_boxplot(width=0.2, color="grey") +
+  geom_point(size=1, shape=16, color="black") +
+#  facet_wrap(~factor(ec.index,levels=c("CC1","SS1","RR1","Light1","Nitrogen1","Soil_disturbance1",
+#                                     "CC2","SS2","RR2","Light2","Nitrogen2","Soil_disturbance2"),
+#                     labels=c("CSR-C1","CSR-S1","CSR-R1","Light1","Nitrogen1","Soil_disturbance1",
+#                              "CSR-C2","CSR-S2","CSR-R2","Light2","Nitrogen2","Soil_disturbance2")), #ncol = 6) + 
+  xlab("Basic ecosystem type") + 
+  ylab("Scaled indicator value (GRUK data, all indicators)") + 
+  theme(legend.position="none") +
+  theme(axis.text.x = element_text(angle = -45, vjust = 0.5, hjust=0.2))
 
 ```
 The ANO results show a high frequency of too low CSR-R values (CSR-R1) and Soil disturbance while also showing signs of higher than expected competition (CSR-C2), which  indicates that a number of naturally open areas are changing in their dominance structure and physical stability. The GRUK data show a generally large spread of scaled values, but the violin plots (the shapes indicate the relative amount of observations across the y-axis) suggest that there is a number of sites with too high nitrogen (Nitrogen2), and some sites with too much disturbance (CSR-R2) and light (Light2). Many GRUK sites are popular outdoor locations with the local population, which could increase disturbance and thus cause deviations towards high CSR-R values (CSR-R2).
