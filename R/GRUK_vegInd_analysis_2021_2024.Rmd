@@ -1302,15 +1302,14 @@ ggplot(aes(x=factor(Kartleggingsenhet_1til5000), y=scaled_value, fill=ec.index))
 res.natopen.GRUK %>%
   filter(ec.index %in% c("CC1","SS1","RR1","Light1","Nitrogen1","Soil_disturbance1",
                          "CC2","SS2","RR2","Light2","Nitrogen2","Soil_disturbance2")) %>%
+  mutate(dir= recode(ec.index,CC1="lower",SS1="lower",RR1="lower",Light1="lower",Nitrogen1="lower",Soil_disturbance1="lower",
+                         CC2="upper",SS2="upper",RR2="upper",Light2="upper",Nitrogen2="upper",Soil_disturbance2="upper")) %>%
 ggplot(aes(x=ec.index, y=scaled_value, fill=ec.index)) + 
   geom_hline(yintercept=0.6, linetype="dashed") + 
   geom_violin(color = NA) +
   #  geom_boxplot(width=0.2, color="grey") +
   geom_point(size=1, shape=16, color="black") +
-#  facet_wrap(~factor(ec.index,levels=c("CC1","SS1","RR1","Light1","Nitrogen1","Soil_disturbance1",
-#                                     "CC2","SS2","RR2","Light2","Nitrogen2","Soil_disturbance2"),
-#                     labels=c("CSR-C1","CSR-S1","CSR-R1","Light1","Nitrogen1","Soil_disturbance1",
-#                              "CSR-C2","CSR-S2","CSR-R2","Light2","Nitrogen2","Soil_disturbance2")), #ncol = 6) + 
+  facet_wrap(~dir, nrow = 2) + 
   xlab("Basic ecosystem type") + 
   ylab("Scaled indicator value (GRUK data, all indicators)") + 
   theme(legend.position="none") +
