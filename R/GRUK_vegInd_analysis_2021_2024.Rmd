@@ -1304,14 +1304,15 @@ res.natopen.GRUK %>%
                          "CC2","SS2","RR2","Light2","Nitrogen2","Soil_disturbance2")) %>%
   mutate(dir= recode(ec.index,CC1="lower",SS1="lower",RR1="lower",Light1="lower",Nitrogen1="lower",Soil_disturbance1="lower",
                          CC2="upper",SS2="upper",RR2="upper",Light2="upper",Nitrogen2="upper",Soil_disturbance2="upper")) %>%
+  mutate(dir = factor(dir,levels=c("upper","lower")) ) %>%
 ggplot(aes(x=ec.index, y=scaled_value, fill=ec.index)) + 
   geom_hline(yintercept=0.6, linetype="dashed") + 
   geom_violin(color = NA) +
   #  geom_boxplot(width=0.2, color="grey") +
   geom_point(size=1, shape=16, color="black") +
-  facet_wrap(~dir, nrow = 2) + 
-  xlab("Basic ecosystem type") + 
-  ylab("Scaled indicator value (GRUK data, all indicators)") + 
+  facet_wrap(~dir, nrow = 2, , scale="free", labeller = labeller(dir = c("upper"="Upper indicator", "lower"="Lower indicator"))) + 
+  xlab("") + 
+  ylab("Scaled indicator value") + 
   theme(legend.position="none") +
   theme(axis.text.x = element_text(angle = -45, vjust = 0.5, hjust=0.2))
 
