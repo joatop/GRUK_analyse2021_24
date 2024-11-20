@@ -1321,6 +1321,20 @@ ggplot(aes(x=ec.index, y=scaled_value, fill=ec.index)) +
   theme(axis.text.x = element_text(angle = -45, vjust = 0.5, hjust=0.2))
 
 ```
+
+Aggregated condition index
+```{r}
+res.natopen.GRUK_wide %>%
+  ggplot(aes(x=factor(Tilstand,levels=c("Dårlig","Moderat","God")),y=ec.beta_agg, fill=Tilstand)) +
+  geom_hline(yintercept=0.6, linetype="dashed") + 
+  geom_violin(color=NA)+
+  geom_point(size=1, shape=16, color="black", position = position_jitter(seed = 1, width = 0.05)) + 
+  xlab("Tilstandsevaluering Mdir instruks") + 
+  ylab("Aggregert tilstandsindex") + 
+  theme(legend.position="none")
+```
+
+
 The ANO results show a high frequency of too low CSR-R values (CSR-R1) and Soil disturbance while also showing signs of higher than expected competition (CSR-C2), which  indicates that a number of naturally open areas are changing in their dominance structure and physical stability. The GRUK data show a generally large spread of scaled values, but the violin plots (the shapes indicate the relative amount of observations across the y-axis) suggest that there is a number of sites with too high nitrogen (Nitrogen2), and some sites with too much disturbance (CSR-R2) and light (Light2). Many GRUK sites are popular outdoor locations with the local population, which could increase disturbance and thus cause deviations towards high CSR-R values (CSR-R2).
 Increased nitrogen may be an effect of alien species, which the GRUK data records as a major pressure and problem for many monitoring sites.
 
