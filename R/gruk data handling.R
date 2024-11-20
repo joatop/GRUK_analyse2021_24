@@ -31,7 +31,7 @@ res.natopen.GRUK_wide %>%
   ggplot(aes(x=factor(Tilstand,levels=c("Dårlig","Moderat","God")),y=ec.beta_agg, fill=Tilstand)) +
   geom_hline(yintercept=0.6, linetype="dashed") + 
   geom_violin(color=NA)+
-  geom_point(size=1, shape=16, color="black") + 
+  geom_point(size=1, shape=16, color="black", position = position_jitter(seed = 1, width = 0.05)) + 
   xlab("Tilstandsevaluering Mdir instruks") + 
   ylab("Aggregert tilstandsindex") + 
   theme(legend.position="none")
