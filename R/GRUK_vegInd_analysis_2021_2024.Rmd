@@ -1277,7 +1277,7 @@ res.natopen.GRUK %>%
 
 ```
 
-We can show the resulting scaled values as Violin plots for each plant indicator in both T2-C7 and T2-C8 or for GRUK alltogether
+We can show the resulting scaled values for the functional plant indicators as Violin plots for each plant indicator in both T2-C7 and T2-C8 or for GRUK alltogether
 ```{r, message=FALSE, warning=FALSE}
 
 # plotting scaled values by ecosystem type
@@ -1533,7 +1533,7 @@ p_Sd1_tre <- p_Sd1_tre +
   annotate("text",x=90, y=0.1, label=paste("p < 0.01"), size=6, col="firebrick" )
 
 
-## Soil_disturbance2 vs. Dekning_problemarter
+## Soil_disturbance2 vs. Totaldekning_problemarter
 # basic scatterplot
 p_Sd2_prob <- res.natopen.GRUK %>%
   filter(ec.index=="Soil_disturbance2") %>%
