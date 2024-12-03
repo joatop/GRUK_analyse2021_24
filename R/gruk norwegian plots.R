@@ -1,3 +1,76 @@
+## aggregating the circle ec-indices for polygons
+ec_polygon <- res.natopen.GRUK_wide %>%
+  group_by(PolygonID) %>%
+  group_modify(.f = ~ broom::tidy(betareg(ec.vs ~ 1, data = .x)))
+
+# did not work to add this
+#    %>%
+    ## expit of the intercept coefficient to get the mean for the polygon
+#  mutate(mu = expit(estimate) %>%
+  ## clean up
+#  filter(term != "(phi)") %>%
+#  select(PolygonID, mu)
+  
+## calculating an overall ec.index for GRUK
+res.natopen.GRUK_wide <- res.natopen.GRUK_wide %>%
+  mutate(ec.vs2 = ifelse(ec.vs < 0.001, 0.001, ec.vs) ) %>%
+  mutate(ec.vs2 = ifelse(ec.vs2 > 0.999, 0.999, ec.vs2) )
+
+ec.total.vs <- glmmTMB(ec.vs2 ~ 1 +(1|LokalitetID/PolygonID), family=beta_family(), data=res.natopen.GRUK_wide)
+summary(ec.total.vs)
+expit(summary(ec.total.vs)$coefficients$cond[1])
+
+ec.omr.vs <- glmmTMB(ec.vs2 ~ 0 + omr +(1|LokalitetID/PolygonID), family=beta_family(), data=res.natopen.GRUK_wide)
+summary(ec.omr.vs)
+expit(summary(ec.omr.vs)$coefficients$cond[,1])
+
+# with mean circle aggregation for comparison
+ec.total.mu <- glmmTMB(ec.beta_agg ~ 1 +(1|LokalitetID/PolygonID), family=beta_family(), data=res.natopen.GRUK_wide)
+summary(ec.total.mu)
+expit(summary(ec.total.mu)$coefficients$cond[1])
+  
+
+  
+
+#### plotting ec.vs for each GRUK-region (indre, midtre og ytre)
+# creating spatial objects for the bounding boxes
+bokses <- data.frame(lon=c(241100,241100,270300,270300,
+                           225000,225000,270300,270300,
+                           184100,184100,214800,214800),
+                     lat=c(6628000,6649700,6649700,6628000,
+                           6590000,6621000,6621000,6590000,
+                           6545000,6568700,6568700,6545000),
+                     omr=c(rep('indre',4),rep('midtre',4),rep('ytre',4))
+)
+
+bokses <- bokses %>%
+  st_as_sf(coords = c("lon", "lat"), remove=F, crs = 25833) %>%
+  group_by(omr) %>%
+  summarise(geometry = st_combine(geometry)) %>%
+  st_cast("POLYGON")
+
+# making the wide results object into a spatial object
+res.natopen.GRUK_wide <- st_as_sf(res.natopen.GRUK_wide, coords = c("UTM33_E","UTM33_N"), remove=F, crs = 25833)
+# adding region information
+res.natopen.GRUK_wide <-  st_join(res.natopen.GRUK_wide, bokses)
+res.natopen.GRUK_wide <-  st_drop_geometry(res.natopen.GRUK_wide)
+
+
+#### plot ec.vs against område
+res.natopen.GRUK_wide %>%
+  ggplot(aes(x=omr,y=ec.vs,fill=omr)) + 
+  geom_hline(yintercept=0.6, linetype="dashed") +
+  geom_violin()+
+  geom_point(size=1, shape=16, color="black", position = position_jitter(seed = 1, width = 0.05)) + 
+  scale_x_discrete(labels=c('Indre Oslofjord', 'Midtre Oslofjord', 'Ytre Oslofjord') ) +
+  xlab("GRUK område") + 
+  ylab("Aggregert tilstandsindex (per sirkel)") + 
+  theme(legend.position="none",
+        axis.text.x = element_text(size=14), 
+        axis.text.y = element_text(size=14), 
+        axis.title=element_text(size=14,face="bold")
+  )
+
 #### Indikatorer på Mdir-variabler
 res.natopen.GRUK %>%
   filter(ec.index %in% c("aliens","erosion","shrub")) %>%
@@ -44,11 +117,11 @@ res.natopen.GRUK %>%
 
 #### Aggregated condition index
 res.natopen.GRUK_wide %>%
-  ggplot(aes(x=factor(Tilstand,levels=c("Dårlig","Moderat","God")),y=ec.beta_agg, fill=Tilstand)) +
+  ggplot(aes(x=factor(Tilstand,levels=c("Dårlig","Moderat","God")),y=ec.vs, fill=Tilstand)) +
   geom_hline(yintercept=0.6, linetype="dashed") + 
   geom_violin(color=NA)+
   geom_point(size=1, shape=16, color="black", position = position_jitter(seed = 1, width = 0.05)) + 
-  xlab("Tilstandsevaluering Mdir instruks") + 
+  xlab("Tilstandsevaluering Mdir instruks (M-2209 )") + 
   ylab("Aggregert tilstandsindex") + 
   theme(legend.position="none",
         axis.text.x = element_text(size=14), 

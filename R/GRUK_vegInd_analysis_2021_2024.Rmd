@@ -1193,7 +1193,7 @@ Aggregation of indicators
 res.natopen.GRUK_wide <- results.natopen.GRUK[['2-sided']]
 
 ## aggregating the functional plant indicators by the 'verste-styrer' principle
-# and aggregating fpi and the other indicatros by arithmetic mean
+# and aggregating fpi and the other indicators by arithmetic mean
 res.natopen.GRUK_wide <- res.natopen.GRUK_wide %>%
   rowwise() %>%
   mutate(fpi = min(Light1,Light2,Nitrogen1,Nitrogen2,Soil_disturbance1,Soil_disturbance2,na.rm=T)) %>%
@@ -1211,6 +1211,47 @@ for (i in 1:nrow(res.natopen.GRUK_wide) ) {
   res.natopen.GRUK_wide[i,"ec.beta_agg"] <- expit(summary(betareg(dat~1))$coefficients$mean[1])
 
 }
+
+## aggregating all indicators in a circle by the 'verste-styrer' principle
+res.natopen.GRUK_wide <- res.natopen.GRUK_wide %>%
+  rowwise() %>%
+  mutate(ec.vs = min(Light1,Light2,Nitrogen1,Nitrogen2,Soil_disturbance1,Soil_disturbance2,aliens,erosion,shrub,na.rm=T)) %>%
+  mutate(ec.vs = na_if(ec.vs,Inf))
+
+
+```
+
+```{r, include = F}
+
+## aggregating the circle ec-indices for polygons
+ec_polygon <- res.natopen.GRUK_wide %>%
+  group_by(PolygonID) %>%
+  group_modify(.f = ~ broom::tidy(betareg(ec.vs ~ 1, data = .x)))
+
+#saveRDS(ec_polygon, "data/cache/ec.polygon.GRUK.RDS")
+```
+
+```{r, include = F}
+
+# Use cache data
+ec_polygon<-readRDS(paste0(here::here(),"/data/cache/ec.polygon.GRUK.RDS"))
+```
+
+```{r}
+## calculating an overall ec.index for GRUK
+res.natopen.GRUK_wide <- res.natopen.GRUK_wide %>%
+  mutate(ec.vs2 = ifelse(ec.vs < 0.001, 0.001, ec.vs) ) %>%
+  mutate(ec.vs2 = ifelse(ec.vs2 > 0.999, 0.999, ec.vs2) )
+
+ec.total.vs <- glmmTMB(ec.vs2 ~ 1 +(1|LokalitetID/PolygonID), family=beta_family(), data=res.natopen.GRUK_wide)
+summary(ec.total.vs)
+expit(summary(ec.total.vs)$coefficients$cond[1])
+
+ec.total.mu <- glmmTMB(ec.beta_agg ~ 1 +(1|LokalitetID/PolygonID), family=beta_family(), data=res.natopen.GRUK_wide)
+summary(ec.total.mu)
+expit(summary(ec.total.mu)$coefficients$cond[1])
+
+
 ```
 
 In order to visualize the results we need to rearrange the results-objects from wide to long format (note that there is both a lower and an upper condition indicator for each of the functional plant indicators).
