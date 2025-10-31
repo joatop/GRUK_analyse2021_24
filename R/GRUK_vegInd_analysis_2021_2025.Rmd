@@ -173,6 +173,9 @@ GRUK.species <- GRUK.species %>%
   mutate(Species=word(Latinsknavn, 1, 2)) # lose subspecies
 unique(as.factor(GRUK.species$Species))
 
+# fixing data type issues
+GRUK.species$art_dekning <- as.numeric(GRUK.species$art_dekning)
+
 # merge species data with indicators
 GRUK.species.ind <- merge(x=GRUK.species[,c("Species", "art_dekning", "Year", "ParentGlobalID","PolygonID","RuteID")], 
                           y= ind.dat[,c("species","CC", "SS", "RR","Light", "Nitrogen", "Soil_disturbance")],
@@ -364,7 +367,10 @@ names(GRUK.variables)[1:32]<-c("PolygonID","GlobalID","RuteID","RuteID_loknr",
                                "LokalitetID","Aar","Lokalitetskvalitet","Kommune","Tilstand",
                                "Naturmangfold","NiNKartleggingsenheter")
 
-
+# fixing data type issues
+GRUK.variables$Totaldekning_fremmedearter <- as.numeric(GRUK.variables$Totaldekning_fremmedearter)
+GRUK.variables$Dekning_busker_busksjikt  <- as.numeric(GRUK.variables$Dekning_busker_busksjikt)
+GRUK.variables$erosjon_prosent    <- as.numeric(GRUK.variables$erosjon_prosent)
 
 ## adding information on ecosystem and condition variables to species+indicator data
 names(GRUK.species.ind)
@@ -914,7 +920,7 @@ for (i in 1:nrow(GRUK.natopen) ) {  #
       dat <- GRUK.species.ind[GRUK.species.ind$ParentGlobalID==as.character(GRUK.natopen$GlobalID[i]),c('art_dekning','CC')]
       results.natopen.GRUK[['original']][i,'richness'] <- nrow(dat)
       dat <- dat[!is.na(dat$CC),]
-      
+
       if ( nrow(dat)>2 ) {
         
         val <- sum(dat[,'art_dekning'] * dat[,'CC'],na.rm=T) / sum(dat[,'art_dekning'],na.rm=T)
@@ -1180,7 +1186,7 @@ results.natopen.GRUK[['2-sided']]$Soil_disturbance2[results.natopen.GRUK[['2-sid
 ```{r, include = F}
 
 # Use cache data
-results.natopen.GRUK<-readRDS(paste0(here::here(),"/data/cache/results.natopen.GRUK.RDS"))
+results.natopen.GRUK<-readRDS(paste0(here::here(),"/data/cache/results.natopen.GRUK2025.RDS"))
 ```
 
 ```{r}
@@ -1231,13 +1237,13 @@ ec_polygon <- res.natopen.GRUK_wide %>%
   group_by(PolygonID) %>%
   group_modify(.f = ~ broom::tidy(betareg(ec.vs ~ 1, data = .x)))
 
-#saveRDS(ec_polygon, "data/cache/ec.polygon.GRUK.RDS")
+#saveRDS(ec_polygon, "data/cache/ec.polygon.GRUK2025.RDS")
 ```
 
 ```{r, include = F}
 
 # Use cache data
-ec_polygon<-readRDS(paste0(here::here(),"/data/cache/ec.polygon.GRUK.RDS"))
+ec_polygon<-readRDS(paste0(here::here(),"/data/cache/ec.polygon.GRUK2025.RDS"))
 ```
 
 Plotting the verste-styrer aggregate for each fjord-region (indre, midtre og ytre)
