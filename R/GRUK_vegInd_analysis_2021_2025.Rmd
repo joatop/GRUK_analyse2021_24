@@ -368,9 +368,19 @@ names(GRUK.variables)[1:32]<-c("PolygonID","GlobalID","RuteID","RuteID_loknr",
                                "Naturmangfold","NiNKartleggingsenheter")
 
 # fixing data type issues
+summary(GRUK.variables)
 GRUK.variables$Totaldekning_fremmedearter <- as.numeric(GRUK.variables$Totaldekning_fremmedearter)
 GRUK.variables$Dekning_busker_busksjikt  <- as.numeric(GRUK.variables$Dekning_busker_busksjikt)
 GRUK.variables$erosjon_prosent    <- as.numeric(GRUK.variables$erosjon_prosent)
+GRUK.variables$Dekning_karplanter_feltsjikt     <- as.numeric(GRUK.variables$Dekning_karplanter_feltsjikt)
+GRUK.variables$Dekning_moser          <- as.numeric(GRUK.variables$Dekning_moser)
+GRUK.variables$Dekning_lav           <- as.numeric(GRUK.variables$Dekning_lav)
+GRUK.variables$Dekning_strø           <- as.numeric(GRUK.variables$Dekning_strø)
+GRUK.variables$Dekning_bar_substrat    <- as.numeric(GRUK.variables$Dekning_bar_substrat)
+GRUK.variables$Dekning_nakentberg    <- as.numeric(GRUK.variables$Dekning_nakentberg)
+GRUK.variables$Totaldekning_vedplanter_feltsjikt    <- as.numeric(GRUK.variables$Totaldekning_vedplanter_feltsjikt)
+GRUK.variables$Dekning_tresjikt    <- as.numeric(GRUK.variables$Dekning_tresjikt)
+GRUK.variables$Dekning_problemarter    <- as.numeric(GRUK.variables$Dekning_problemarter)
 
 ## adding information on ecosystem and condition variables to species+indicator data
 names(GRUK.species.ind)
@@ -1308,7 +1318,12 @@ expit(summary(ec.total.vs)$coefficients$cond[1])
 # fjord areas
 ec.omr.vs <- glmmTMB(ec.vs2 ~ 0 + omr +(1|LokalitetID/PolygonID), family=beta_family(), data=res.natopen.GRUK_wide)
 summary(ec.omr.vs)
-expit(summary(ec.omr.vs)$coefficients$cond[,1])
+expit(
+  c(summary(ec.omr.vs)$coefficients$cond[1,1],
+    summary(ec.omr.vs)$coefficients$cond[1,1]+summary(ec.omr.vs)$coefficients$cond[2,1],
+    summary(ec.omr.vs)$coefficients$cond[1,1]+summary(ec.omr.vs)$coefficients$cond[3,1])
+)
+
 
 ```
 
@@ -1481,7 +1496,7 @@ res.natopen.GRUK_wide %>%
 
 
 We can test if the functional plant indicator indices correlate with the circle based indicator data
-```{r}
+```{r, eval=F}
 
 x <- c("erosjon_prosent","Dekning_busker_busksjikt","Dekning_tresjikt","Dekning_problemarter" ,"Totaldekning_fremmedearter")
 y1 <- c("CC1","CC2","SS1","SS2","RR1","RR2")
